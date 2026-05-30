@@ -53,6 +53,23 @@ export const DEFAULT_APP_UPDATE_DEBUG_HINT =
 // Keep this array newest-first. The first entry is treated as the latest release.
 export const APP_UPDATE_RELEASES: AppUpdateRelease[] = [
   {
+    version: '3.0.0',
+    releasedAt: '2026-05-30',
+    entries: [
+      {
+        id: 'hermes-tailscale-endpoint',
+        emoji: '🪽',
+        title: 'Hermes over Tailscale',
+        subtitle: 'Reach your Hermes bridge by MagicDNS — no more ephemeral tunnels expiring.',
+        action: {
+          type: 'navigate_config_add_connection',
+          tab: 'quick',
+          flow: 'local',
+        },
+      },
+    ],
+  },
+  {
     version: '2.1.0',
     releasedAt: '2026-04-12',
     entries: [

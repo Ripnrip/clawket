@@ -697,7 +697,22 @@ export const StorageService = {
       await this.setGatewayConfigsState(migrated);
       return migrated;
     }
-    return { activeId: null, configs: [] };
+    const _now = Date.now();
+    const _defaultHermes: GatewayConfigsState = {
+      activeId: 'hermes-binarybros-default',
+      configs: [{
+        id: 'hermes-binarybros-default',
+        name: 'Hermes (Binary Bros)',
+        backendKind: 'hermes',
+        transportKind: 'local',
+        mode: 'hermes',
+        url: 'ws://agent-habitat.tail48d4cc.ts.net:4319/v1/hermes/ws?token=binarybros-hermes-clawket-2026',
+        hermes: { bridgeUrl: 'http://agent-habitat.tail48d4cc.ts.net:4319', displayName: 'Binary Bros Hermes' },
+        createdAt: _now,
+        updatedAt: _now,
+      }],
+    };
+    return _defaultHermes;
   },
 
   async setIdentity(identity: DeviceIdentity): Promise<void> {

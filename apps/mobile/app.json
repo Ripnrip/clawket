@@ -2,7 +2,7 @@
   "expo": {
     "name": "Clawket",
     "slug": "clawket",
-    "version": "2.1.0",
+    "version": "3.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.p697.clawket",
+      "bundleIdentifier": "com.binarybros.clawket",
       "infoPlist": {
         "NSCameraUsageDescription": "Allow Clawket to use your camera to scan QR codes and take photos to send to AI.",
         "NSPhotoLibraryAddUsageDescription": "Allow Clawket to save stats posters to your photo library.",
@@ -32,7 +32,8 @@
         "CFBundleDevelopmentRegion": "en",
         "UIPrefersShowingLanguageSettings": true
       },
-      "appleTeamId": "C8TM82D73W"
+      "appleTeamId": "ZWT3N8XKE7",
+      "buildNumber": "260530"
     },
     "android": {
       "adaptiveIcon": {
@@ -126,6 +127,6 @@
         "projectId": "972e845f-da81-44db-a908-24be4ca80288"
       }
     },
-    "owner": "p697"
+    "owner": "binarybros"
   }
 }
