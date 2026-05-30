@@ -59,6 +59,7 @@ export function toRuntimeConfig(item: SavedGatewayConfig, debugMode: boolean): G
     transportKind,
     mode: toLegacyGatewayMode({ backendKind, transportKind }),
     hermes: item.hermes,
+    agentzero: item.agentzero,
     relay: item.relay,
     debugMode,
   };

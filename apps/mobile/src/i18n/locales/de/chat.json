@@ -322,9 +322,8 @@
   "New message from {{agentName}}": "Neue Nachricht von {{agentName}}",
   "YouMind": "YouMind",
   "New chat": "New chat",
-  "Sign in to YouMind": "Sign in to YouMind",
-  "Open your YouMind boards, materials, and chats from here.": "Open your YouMind boards, materials, and chats from here.",
   "Sign in to YouMind": "Bei YouMind anmelden",
+  "Open your YouMind boards, materials, and chats from here.": "Open your YouMind boards, materials, and chats from here.",
   "Continue with Apple, Google, or email to open your YouMind account.": "Continue with Apple, Google, or email to open your YouMind account.",
   "Continue with Apple": "Continue with Apple",
   "Continue with Google": "Continue with Google",
@@ -381,5 +380,14 @@
   "You now can connect your YouMind account.": "Du kannst jetzt dein YouMind-Konto verbinden.",
   "Open Add Connection and choose Use YouMind to pick an existing account or sign in with another one.": "Öffne Add Connection und wähle Use YouMind, um ein vorhandenes Konto auszuwählen oder dich mit einem anderen Konto anzumelden.",
   "Manage YouMind accounts": "YouMind-Konten verwalten",
-  "Sign out": "Sign out"
+  "Sign out": "Sign out",
+  "Connection not configured": "Verbindung nicht konfiguriert",
+  "Set the Agent Zero base URL and Auth Token in Settings → Connections.": "Lege die Agent-Zero-Basis-URL und das Auth-Token in Einstellungen → Verbindungen fest.",
+  "Reset Chat": "Chat zurücksetzen",
+  "Project: {{name}}": "Projekt: {{name}}",
+  "Say hi to Agent Zero. Streaming begins after your first message.": "Begrüße Agent Zero. Das Streaming startet nach deiner ersten Nachricht.",
+  "Agent Zero is working…": "Agent Zero arbeitet…",
+  "Message Agent Zero": "Nachricht an Agent Zero",
+  "Send": "Senden",
+  "Agent Zero": "Agent Zero"
 }

@@ -322,9 +322,8 @@
   "New message from {{agentName}}": "{{agentName}} 님의 새 메시지",
   "YouMind": "YouMind",
   "New chat": "New chat",
-  "Sign in to YouMind": "Sign in to YouMind",
-  "Open your YouMind boards, materials, and chats from here.": "Open your YouMind boards, materials, and chats from here.",
   "Sign in to YouMind": "YouMind에 로그인",
+  "Open your YouMind boards, materials, and chats from here.": "Open your YouMind boards, materials, and chats from here.",
   "Continue with Apple, Google, or email to open your YouMind account.": "Continue with Apple, Google, or email to open your YouMind account.",
   "Continue with Apple": "Continue with Apple",
   "Continue with Google": "Continue with Google",
@@ -381,5 +380,14 @@
   "You now can connect your YouMind account.": "이제 YouMind 계정을 연결할 수 있어요.",
   "Open Add Connection and choose Use YouMind to pick an existing account or sign in with another one.": "Add Connection을 연 뒤 Use YouMind를 선택하면 기존 계정을 고르거나 다른 계정으로 로그인할 수 있습니다.",
   "Manage YouMind accounts": "YouMind 계정 관리",
-  "Sign out": "Sign out"
+  "Sign out": "Sign out",
+  "Connection not configured": "연결이 구성되지 않았습니다",
+  "Set the Agent Zero base URL and Auth Token in Settings → Connections.": "설정 → 연결에서 Agent Zero 기본 URL과 Auth Token을 설정하세요.",
+  "Reset Chat": "채팅 초기화",
+  "Project: {{name}}": "프로젝트: {{name}}",
+  "Say hi to Agent Zero. Streaming begins after your first message.": "Agent Zero에 인사를 건네 보세요. 첫 메시지를 보내면 스트리밍이 시작됩니다.",
+  "Agent Zero is working…": "Agent Zero가 작업 중…",
+  "Message Agent Zero": "Agent Zero에 메시지",
+  "Send": "전송",
+  "Agent Zero": "Agent Zero"
 }

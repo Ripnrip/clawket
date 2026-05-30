@@ -63,6 +63,10 @@ function normalizeEditorTransportKind(backendKind: GatewayBackendKind, transport
   if (backendKind === 'youmind') {
     return 'custom';
   }
+  if (backendKind === 'agentzero') {
+    // AZ is plain HTTP to its web server; no relay/local/tailscale distinction.
+    return 'custom';
+  }
   return transportKind;
 }
 
@@ -82,6 +86,35 @@ function deriveHermesBridgeConfig(
     return {
       bridgeUrl: parsed.toString().replace(/\/+$/, ''),
       ...(existing?.displayName ? { displayName: existing.displayName } : {}),
+    };
+  } catch {
+    return existing;
+  }
+}
+
+/**
+ * Agent Zero wants a base HTTP URL (e.g. http://agent-habitat.tail48d4cc.ts.net:5000).
+ * We accept ws://… too as a courtesy — users frequently paste their Hermes-style URL
+ * by accident — and rewrite to http(s).
+ */
+function deriveAgentZeroConfig(
+  url: string,
+  existing?: SavedGatewayConfig['agentzero'],
+): SavedGatewayConfig['agentzero'] | undefined {
+  const trimmed = url.trim();
+  if (!trimmed) {
+    return existing;
+  }
+  try {
+    const parsed = new URL(trimmed.replace(/^ws:/, 'http:').replace(/^wss:/, 'https:'));
+    parsed.hash = '';
+    parsed.search = '';
+    // AZ has no canonical chat path; strip anything the user accidentally pasted.
+    parsed.pathname = '/';
+    return {
+      bridgeUrl: parsed.toString().replace(/\/+$/, ''),
+      ...(existing?.displayName ? { displayName: existing.displayName } : {}),
+      ...(existing?.projectName ? { projectName: existing.projectName } : {}),
     };
   } catch {
     return existing;
@@ -187,7 +220,12 @@ export function useGatewayConfigForm({ gateway, initialConfig, debugMode, onSave
     () => toLegacyGatewayMode({ backendKind: editorBackendKind, transportKind: manualEditorTransportKind }),
     [editorBackendKind, manualEditorTransportKind],
   );
-  const editorRequiresDirectAuth = editorBackendKind === 'openclaw' && manualEditorTransportKind !== 'relay';
+  // OpenClaw wants a chat-server token/password; Agent Zero wants its X-API-KEY
+  // surfaced via the same token field. Hermes embeds its token directly in the
+  // ws:// URL query string, so it doesn't need a separate auth input.
+  const editorRequiresDirectAuth =
+    (editorBackendKind === 'openclaw' && manualEditorTransportKind !== 'relay')
+    || editorBackendKind === 'agentzero';
 
   const setEditorBackendKind = useCallback((nextBackendKind: GatewayBackendKind) => {
     setEditorBackendKindState(nextBackendKind);
@@ -474,10 +512,15 @@ export function useGatewayConfigForm({ gateway, initialConfig, debugMode, onSave
       url: trimmedUrl,
       index: configs.length + 1,
     });
-    const token = backendKind === 'openclaw' && editorAuthMethodState === 'token' ? (trimmedToken || undefined) : undefined;
+    // Agent Zero piggybacks on the OpenClaw `token` field for its X-API-KEY.
+    const tokenBackendUsesAuthField = backendKind === 'openclaw' || backendKind === 'agentzero';
+    const token = tokenBackendUsesAuthField && editorAuthMethodState === 'token' ? (trimmedToken || undefined) : undefined;
     const password = backendKind === 'openclaw' && editorAuthMethodState === 'password' ? (trimmedPassword || undefined) : undefined;
     const hermes = backendKind === 'hermes'
       ? deriveHermesBridgeConfig(trimmedUrl, configs.find((item) => item.id === editingConfigId)?.hermes)
+      : undefined;
+    const agentzero = backendKind === 'agentzero'
+      ? deriveAgentZeroConfig(trimmedUrl, configs.find((item) => item.id === editingConfigId)?.agentzero)
       : undefined;
     const relay = transportKind === 'relay'
       ? {
@@ -506,6 +549,7 @@ export function useGatewayConfigForm({ gateway, initialConfig, debugMode, onSave
         token,
         password,
         hermes,
+        agentzero,
         relay,
         updatedAt: now,
       };
@@ -540,6 +584,7 @@ export function useGatewayConfigForm({ gateway, initialConfig, debugMode, onSave
       token,
       password,
       hermes,
+      agentzero,
       relay,
       createdAt: now,
       updatedAt: now,

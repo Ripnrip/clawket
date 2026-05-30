@@ -324,7 +324,6 @@
   "New chat": "新聊天",
   "Sign in to YouMind": "登录 YouMind",
   "Open your YouMind boards, materials, and chats from here.": "在这里打开你的 YouMind 画板、资料和聊天。",
-  "Sign in to YouMind": "登录 YouMind",
   "Continue with Apple, Google, or email to open your YouMind account.": "使用 Apple、Google 或邮箱继续，打开你的 YouMind 账户。",
   "Continue with Apple": "使用 Apple 继续",
   "Continue with Google": "使用 Google 继续",
@@ -381,5 +380,14 @@
   "You now can connect your YouMind account.": "你现在可以连接你的 YouMind 账号。",
   "Open Add Connection and choose Use YouMind to pick an existing account or sign in with another one.": "打开 Add Connection，然后选择 Use YouMind，以选择已有账号或登录另一个账号。",
   "Manage YouMind accounts": "管理 YouMind 账号",
-  "Sign out": "退出登录"
+  "Sign out": "退出登录",
+  "Connection not configured": "连接未配置",
+  "Set the Agent Zero base URL and Auth Token in Settings → Connections.": "在 设置 → 连接 中填写 Agent Zero 的地址和 Auth Token。",
+  "Reset Chat": "重置对话",
+  "Project: {{name}}": "项目：{{name}}",
+  "Say hi to Agent Zero. Streaming begins after your first message.": "向 Agent Zero 打个招呼。发送第一条消息后即开始流式响应。",
+  "Agent Zero is working…": "Agent Zero 正在处理…",
+  "Message Agent Zero": "发送给 Agent Zero",
+  "Send": "发送",
+  "Agent Zero": "Agent Zero"
 }

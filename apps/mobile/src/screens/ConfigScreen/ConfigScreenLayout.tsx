@@ -112,6 +112,11 @@ function getUrlPlaceholder(input: {
   if (input.backendKind === 'youmind') {
     return 'https://youmind.com';
   }
+  if (input.backendKind === 'agentzero') {
+    // AZ wants the base HTTP URL of the web server (port 5000 by default).
+    // The /api/api_message{,_async} + /api/api_log_get paths are added by the client.
+    return 'http://agent-habitat.tail48d4cc.ts.net:5000';
+  }
   if (input.backendKind === 'hermes') {
     switch (input.transportKind) {
       case 'local':
@@ -1346,7 +1351,7 @@ function EditorModal({ controller, theme, styles }: EditorModalProps): React.JSX
   const manualBackendOptions = useMemo(
     () => ((isEditing && controller.editorBackendKind === 'youmind')
       ? (['youmind'] as const)
-      : (['openclaw', 'hermes'] as const)),
+      : (['openclaw', 'hermes', 'agentzero'] as const)),
     [controller.editorBackendKind, isEditing],
   );
   const authInputLabel = controller.editorAuthMethod === 'token' ? t('Auth Token') : t('Password');

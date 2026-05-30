@@ -620,4 +620,97 @@ describe('useGatewayConfigForm', () => {
     expect(gateway.disconnect).toHaveBeenCalledTimes(1);
     expect(onReset).toHaveBeenCalledTimes(1);
   });
+
+  it('saves an Agent Zero connection with backendKind=agentzero, normalized bridgeUrl, and token', async () => {
+    const onSaved = jest.fn();
+    const gateway = {
+      disconnect: jest.fn(),
+      configure: jest.fn(),
+      connect: jest.fn(),
+      getDeviceIdentity: jest.fn().mockResolvedValue({ deviceId: 'device-az' }),
+    } as any;
+
+    const { result } = renderHook(() =>
+      useGatewayConfigForm({
+        gateway,
+        initialConfig: null,
+        debugMode: false,
+        onSaved,
+        onReset: jest.fn(),
+      }),
+    );
+
+    await act(async () => {
+      result.current.openCreateEditor('manual');
+    });
+
+    await act(async () => {
+      result.current.setEditorBackendKind('agentzero');
+      result.current.setEditorUrl('http://agent-habitat.tail48d4cc.ts.net:5000/');
+      result.current.setEditorAuthMethod('token');
+      result.current.setEditorToken('6Gv7AhbIbZ8CEjUb');
+      result.current.setEditorName('Habitat AZ');
+    });
+
+    await act(async () => {
+      await result.current.saveEditor();
+    });
+
+    const lastCall = (StorageService.setGatewayConfigsState as jest.Mock).mock.calls.at(-1)?.[0];
+    expect(lastCall.configs[0]).toMatchObject({
+      name: 'Habitat AZ',
+      backendKind: 'agentzero',
+      transportKind: 'custom',
+      mode: 'agentzero',
+      url: 'http://agent-habitat.tail48d4cc.ts.net:5000/',
+      token: '6Gv7AhbIbZ8CEjUb',
+      password: undefined,
+      hermes: undefined,
+      agentzero: {
+        // Trailing slash stripped, no path appended.
+        bridgeUrl: 'http://agent-habitat.tail48d4cc.ts.net:5000',
+      },
+    });
+    expect(onSaved).toHaveBeenCalled();
+  });
+
+  it('rejects an Agent Zero connection without a token (X-API-KEY is required)', async () => {
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const onSaved = jest.fn();
+    const gateway = {
+      disconnect: jest.fn(),
+      configure: jest.fn(),
+      connect: jest.fn(),
+      getDeviceIdentity: jest.fn().mockResolvedValue({ deviceId: 'device-az' }),
+    } as any;
+
+    const { result } = renderHook(() =>
+      useGatewayConfigForm({
+        gateway,
+        initialConfig: null,
+        debugMode: false,
+        onSaved,
+        onReset: jest.fn(),
+      }),
+    );
+
+    await act(async () => {
+      result.current.openCreateEditor('manual');
+    });
+
+    await act(async () => {
+      result.current.setEditorBackendKind('agentzero');
+      result.current.setEditorUrl('http://agent-habitat.tail48d4cc.ts.net:5000');
+      // no token
+    });
+
+    await act(async () => {
+      await result.current.saveEditor();
+    });
+
+    expect(alertSpy).toHaveBeenCalledWith('Missing Auth', expect.any(String));
+    expect(StorageService.setGatewayConfigsState).not.toHaveBeenCalled();
+    expect(onSaved).not.toHaveBeenCalled();
+    alertSpy.mockRestore();
+  });
 });

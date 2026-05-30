@@ -322,9 +322,8 @@
   "New message from {{agentName}}": "{{agentName}} から新しいメッセージ",
   "YouMind": "YouMind",
   "New chat": "New chat",
-  "Sign in to YouMind": "Sign in to YouMind",
-  "Open your YouMind boards, materials, and chats from here.": "Open your YouMind boards, materials, and chats from here.",
   "Sign in to YouMind": "YouMind にサインイン",
+  "Open your YouMind boards, materials, and chats from here.": "Open your YouMind boards, materials, and chats from here.",
   "Continue with Apple, Google, or email to open your YouMind account.": "Continue with Apple, Google, or email to open your YouMind account.",
   "Continue with Apple": "Continue with Apple",
   "Continue with Google": "Continue with Google",
@@ -381,5 +380,14 @@
   "You now can connect your YouMind account.": "YouMind アカウントを接続できるようになりました。",
   "Open Add Connection and choose Use YouMind to pick an existing account or sign in with another one.": "Add Connection を開いて Use YouMind を選択すると、既存アカウントを選ぶか別のアカウントでサインインできます。",
   "Manage YouMind accounts": "YouMind アカウントを管理",
-  "Sign out": "Sign out"
+  "Sign out": "Sign out",
+  "Connection not configured": "接続が未設定です",
+  "Set the Agent Zero base URL and Auth Token in Settings → Connections.": "設定 → 接続 で Agent Zero のベース URL と Auth Token を設定してください。",
+  "Reset Chat": "チャットをリセット",
+  "Project: {{name}}": "プロジェクト: {{name}}",
+  "Say hi to Agent Zero. Streaming begins after your first message.": "Agent Zero に挨拶しましょう。最初のメッセージを送るとストリーミングが始まります。",
+  "Agent Zero is working…": "Agent Zero が処理中…",
+  "Message Agent Zero": "Agent Zero にメッセージ",
+  "Send": "送信",
+  "Agent Zero": "Agent Zero"
 }

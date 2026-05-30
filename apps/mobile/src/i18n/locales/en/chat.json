@@ -324,7 +324,6 @@
   "New chat": "New chat",
   "Sign in to YouMind": "Sign in to YouMind",
   "Open your YouMind boards, materials, and chats from here.": "Open your YouMind boards, materials, and chats from here.",
-  "Sign in to YouMind": "Sign in to YouMind",
   "Continue with Apple, Google, or email to open your YouMind account.": "Continue with Apple, Google, or email to open your YouMind account.",
   "Continue with Apple": "Continue with Apple",
   "Continue with Google": "Continue with Google",
@@ -381,5 +380,14 @@
   "You now can connect your YouMind account.": "You now can connect your YouMind account.",
   "Open Add Connection and choose Use YouMind to pick an existing account or sign in with another one.": "Open Add Connection and choose Use YouMind to pick an existing account or sign in with another one.",
   "Manage YouMind accounts": "Manage YouMind accounts",
-  "Sign out": "Sign out"
+  "Sign out": "Sign out",
+  "Connection not configured": "Connection not configured",
+  "Set the Agent Zero base URL and Auth Token in Settings → Connections.": "Set the Agent Zero base URL and Auth Token in Settings → Connections.",
+  "Reset Chat": "Reset Chat",
+  "Project: {{name}}": "Project: {{name}}",
+  "Say hi to Agent Zero. Streaming begins after your first message.": "Say hi to Agent Zero. Streaming begins after your first message.",
+  "Agent Zero is working…": "Agent Zero is working…",
+  "Message Agent Zero": "Message Agent Zero",
+  "Send": "Send",
+  "Agent Zero": "Agent Zero"
 }

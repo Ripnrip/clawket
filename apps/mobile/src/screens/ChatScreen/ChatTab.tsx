@@ -15,6 +15,7 @@ import { ChatControllerProvider, useChatControllerContext } from './ChatControll
 import { useChatController } from './hooks/useChatController';
 import { ChatScreen } from './index';
 import { YouMindChatTab } from './YouMindChatTab';
+import { AgentZeroChatTab } from './AgentZeroChatTab';
 
 export type ChatDrawerParamList = {
   ChatMain: undefined;
@@ -240,6 +241,9 @@ export function ChatTab(): React.JSX.Element {
   } = useAppContext();
   if (config?.backendKind === 'youmind') {
     return <YouMindChatTab />;
+  }
+  if (config?.backendKind === 'agentzero') {
+    return <AgentZeroChatTab />;
   }
   const [sidebarPreset, setSidebarPreset] = React.useState<{
     requestedAt: number;
