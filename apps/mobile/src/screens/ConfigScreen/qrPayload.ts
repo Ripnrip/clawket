@@ -195,7 +195,7 @@ export function parseQRPayload(raw: string): QRScanResult | null {
         return {
           url: String(obj.url),
           ...(hermes ? { backendKind: 'hermes' as const } : {}),
-          ...(mode && mode !== 'hermes' ? { transportKind: mode } : {}),
+          ...(mode && mode !== 'hermes' && mode !== 'agentzero' ? { transportKind: mode } : {}),
           ...(typeof obj.token === 'string' ? { token: obj.token } : {}),
           ...(typeof obj.password === 'string' ? { password: obj.password } : {}),
           mode,
@@ -223,7 +223,7 @@ export function parseQRPayload(raw: string): QRScanResult | null {
         return {
           url: `${scheme}://${obj.host}:${port}`,
           ...(hermes ? { backendKind: 'hermes' as const } : {}),
-          ...(mode && mode !== 'hermes' ? { transportKind: mode } : {}),
+          ...(mode && mode !== 'hermes' && mode !== 'agentzero' ? { transportKind: mode } : {}),
           ...(typeof obj.token === 'string' ? { token: obj.token } : {}),
           ...(typeof obj.password === 'string' ? { password: obj.password } : {}),
           mode,

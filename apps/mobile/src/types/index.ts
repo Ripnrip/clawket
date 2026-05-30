@@ -30,9 +30,29 @@ export interface HermesGatewayConfig {
   displayName?: string;
 }
 
-export type GatewayBackendKind = 'openclaw' | 'hermes' | 'youmind';
+/**
+ * Agent Zero connection block.
+ *
+ * Agent Zero exposes a Socket.IO transport on the same HTTP host that serves
+ * its web UI (port 5000 by default). Unlike OpenClaw the chat path is not a
+ * bare WebSocket — clients connect via Socket.IO and authenticate with the
+ * `X-API-KEY` header (the value comes from helpers/settings.create_auth_token
+ * on the AZ side, currently surfaced as `token` on this config).
+ *
+ * `projectName` switches the active AZ project (analogous to `/project foo`
+ * in the `a0` CLI). When unset, AZ uses the default project.
+ */
+export interface AgentZeroGatewayConfig {
+  /** Base HTTP URL of the AZ instance (no trailing slash). e.g. http://agent-habitat.tail48d4cc.ts.net:5000 */
+  bridgeUrl: string;
+  displayName?: string;
+  /** Optional AZ project to scope the conversation to. */
+  projectName?: string;
+}
+
+export type GatewayBackendKind = 'openclaw' | 'hermes' | 'youmind' | 'agentzero';
 export type GatewayTransportKind = 'local' | 'tailscale' | 'cloudflare' | 'custom' | 'relay';
-export type GatewayMode = GatewayTransportKind | 'hermes';
+export type GatewayMode = GatewayTransportKind | 'hermes' | 'agentzero';
 
 export interface GatewayConfig {
   url: string;
@@ -44,6 +64,7 @@ export interface GatewayConfig {
   mode?: GatewayMode;
   relay?: RelayGatewayConfig;
   hermes?: HermesGatewayConfig;
+  agentzero?: AgentZeroGatewayConfig;
   debugMode?: boolean;
 }
 
@@ -74,6 +95,7 @@ export interface SavedGatewayConfig {
   password?: string;
   relay?: RelayGatewayConfig;
   hermes?: HermesGatewayConfig;
+  agentzero?: AgentZeroGatewayConfig;
   createdAt: number;
   updatedAt: number;
 }

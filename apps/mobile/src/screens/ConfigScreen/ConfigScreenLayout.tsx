@@ -101,6 +101,7 @@ function getBackendLabels(t: (key: string) => string): Record<GatewayBackendKind
     openclaw: t('OpenClaw'),
     hermes: t('Hermes'),
     youmind: t('YouMind'),
+    agentzero: t('Agent Zero'),
   };
 }
 

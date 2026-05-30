@@ -37,6 +37,20 @@ describe('gateway-backends', () => {
       expect(resolveGatewayBackendKind({ mode: 'local' } as any)).toBe('openclaw');
       expect(resolveGatewayBackendKind({ mode: 'custom' } as any)).toBe('openclaw');
     });
+
+    it('honors explicit backendKind === agentzero', () => {
+      expect(resolveGatewayBackendKind({ backendKind: 'agentzero' } as any)).toBe('agentzero');
+    });
+
+    it('falls back to legacy mode === agentzero', () => {
+      expect(resolveGatewayBackendKind({ mode: 'agentzero' } as any)).toBe('agentzero');
+    });
+
+    it('falls back to presence of agentzero config block', () => {
+      expect(
+        resolveGatewayBackendKind({ agentzero: { bridgeUrl: 'http://host:5000' } } as any),
+      ).toBe('agentzero');
+    });
   });
 
   describe('resolveGatewayTransportKind', () => {
@@ -96,6 +110,11 @@ describe('gateway-backends', () => {
       expect(resolveGlobalMainSessionKey('hermes')).toBe('main');
       expect(resolveGlobalMainSessionKey({ backendKind: 'hermes' } as any)).toBe('main');
     });
+
+    it('returns "main" for agentzero (session-shaped backend)', () => {
+      expect(resolveGlobalMainSessionKey('agentzero')).toBe('main');
+      expect(resolveGlobalMainSessionKey({ backendKind: 'agentzero' } as any)).toBe('main');
+    });
   });
 
   describe('getGatewayModeLabel', () => {
@@ -110,6 +129,11 @@ describe('gateway-backends', () => {
     it('keeps the backend label for Hermes irrespective of transport', () => {
       expect(getGatewayModeLabel({ backendKind: 'hermes', transportKind: 'relay' } as any)).toBe('Hermes');
       expect(getGatewayModeLabel({ backendKind: 'hermes', transportKind: 'local' } as any)).toBe('Hermes');
+    });
+
+    it('labels Agent Zero independently of transport', () => {
+      expect(getGatewayModeLabel({ backendKind: 'agentzero', transportKind: 'tailscale' } as any)).toBe('Agent Zero');
+      expect(getGatewayModeLabel({ backendKind: 'agentzero', transportKind: 'custom' } as any)).toBe('Agent Zero');
     });
   });
 
@@ -167,9 +191,11 @@ describe('gateway-backends', () => {
   });
 
   describe('type guards', () => {
-    it('isGatewayBackendKind accepts only the two known backends', () => {
+    it('isGatewayBackendKind accepts every registered backend', () => {
       expect(isGatewayBackendKind('openclaw')).toBe(true);
       expect(isGatewayBackendKind('hermes')).toBe(true);
+      expect(isGatewayBackendKind('youmind')).toBe(true);
+      expect(isGatewayBackendKind('agentzero')).toBe(true);
       expect(isGatewayBackendKind('other')).toBe(false);
       expect(isGatewayBackendKind(undefined)).toBe(false);
     });
@@ -198,6 +224,26 @@ describe('gateway-backends', () => {
 
     it('defaults to "custom" when no transport is provided for OpenClaw', () => {
       expect(toLegacyGatewayMode({ backendKind: 'openclaw' })).toBe('custom');
+    });
+
+    it('maps Agent Zero to the legacy "agentzero" mode irrespective of transport', () => {
+      expect(toLegacyGatewayMode({ backendKind: 'agentzero', transportKind: 'tailscale' })).toBe('agentzero');
+      expect(toLegacyGatewayMode({ backendKind: 'agentzero', transportKind: 'custom' })).toBe('agentzero');
+    });
+  });
+
+  describe('Agent Zero capabilities (phase-1 sketch)', () => {
+    it('has the chat capability enabled but advanced console screens off until adapters land', () => {
+      const caps = getGatewayBackendCapabilities('agentzero');
+      expect(caps.consoleRoot).toBe(true);
+      expect(caps.gatewayConnection).toBe(true);
+      expect(caps.chatAbort).toBe(true);
+      expect(caps.chatAttachments).toBe(true);
+      // Phase-1 intentionally off:
+      expect(caps.consoleCron).toBe(false);
+      expect(caps.consoleClawHub).toBe(false);
+      expect(caps.modelSelection).toBe(false);
+      expect(caps.openClawConfigScreens).toBe(false);
     });
   });
 });

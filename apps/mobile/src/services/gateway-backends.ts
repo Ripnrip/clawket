@@ -8,7 +8,7 @@ import type {
 import { THINKING_LEVELS } from '../utils/gateway-settings';
 import type { ThinkingLevel } from '../utils/gateway-settings';
 
-type GatewayLike = Pick<GatewayConfig, 'backendKind' | 'transportKind' | 'mode' | 'relay' | 'hermes'>;
+type GatewayLike = Pick<GatewayConfig, 'backendKind' | 'transportKind' | 'mode' | 'relay' | 'hermes' | 'agentzero'>;
 
 export type GatewayBackendCapabilities = {
   consoleRoot: boolean;
@@ -102,6 +102,42 @@ const HERMES_CAPABILITIES: GatewayBackendCapabilities = {
   openClawConfigScreens: false,
 };
 
+// Agent Zero capabilities — phase 1 sketch.
+//
+// AZ is a session-shaped backend (one project at a time, like Hermes' "main"
+// session model). Phase 1 ships only the chat path; console screens that need
+// AZ-specific HTTP wiring stay off until their adapters land. When toggling
+// any flag on, search for `selectByBackend` call sites in the corresponding
+// screen and decide whether the existing `openclaw` fallthrough is acceptable
+// or a dedicated `agentzero` branch is needed.
+const AGENTZERO_CAPABILITIES: GatewayBackendCapabilities = {
+  consoleRoot: true,
+  gatewayConnection: true,
+  chatAbort: true,
+  chatAttachments: true,
+  consoleDiscover: false,
+  consoleClawHub: false,
+  modelCatalog: false,
+  modelSelection: false,
+  configRead: false,
+  configWrite: false,
+  consoleChannels: false,
+  consoleCron: false,
+  consoleCronCreate: false,
+  consoleSkills: false,
+  consoleUsage: false,
+  consoleCost: false,
+  consoleTools: false,
+  consoleNodes: false,
+  consoleFiles: false,
+  consoleLogs: false,
+  consoleAgentList: false,
+  consoleAgentDetail: false,
+  consoleAgentSessionsBoard: false,
+  consoleHeartbeat: false,
+  openClawConfigScreens: false,
+};
+
 const YOUMIND_CAPABILITIES: GatewayBackendCapabilities = {
   consoleRoot: true,
   gatewayConnection: false,
@@ -141,6 +177,11 @@ const BACKENDS: Record<GatewayBackendKind, GatewayBackendDescriptor> = {
     label: 'Hermes',
     capabilities: HERMES_CAPABILITIES,
   },
+  agentzero: {
+    kind: 'agentzero',
+    label: 'Agent Zero',
+    capabilities: AGENTZERO_CAPABILITIES,
+  },
   youmind: {
     kind: 'youmind',
     label: 'YouMind',
@@ -149,6 +190,12 @@ const BACKENDS: Record<GatewayBackendKind, GatewayBackendDescriptor> = {
 };
 
 const HERMES_THINKING_LEVELS: ThinkingLevel[] = ['off', 'minimal', 'low', 'medium', 'high', 'xhigh'];
+
+// Agent Zero does not yet expose a thinking-level selector (the framework
+// owns reasoning depth via the model config). Surface a single "off" entry
+// so the UI selector renders consistently without claiming a feature we
+// don't support over the wire.
+const AGENTZERO_THINKING_LEVELS: ThinkingLevel[] = ['off'];
 
 export function isGatewayTransportKind(value: unknown): value is GatewayTransportKind {
   return value === 'local'
@@ -159,12 +206,13 @@ export function isGatewayTransportKind(value: unknown): value is GatewayTranspor
 }
 
 export function isGatewayBackendKind(value: unknown): value is GatewayBackendKind {
-  return value === 'openclaw' || value === 'hermes' || value === 'youmind';
+  return value === 'openclaw' || value === 'hermes' || value === 'youmind' || value === 'agentzero';
 }
 
 export function resolveGatewayBackendKind(value: GatewayLike | null | undefined): GatewayBackendKind {
   if (isGatewayBackendKind(value?.backendKind)) return value.backendKind;
   if (value?.mode === 'hermes' || value?.hermes) return 'hermes';
+  if (value?.mode === 'agentzero' || value?.agentzero) return 'agentzero';
   return 'openclaw';
 }
 
@@ -180,6 +228,7 @@ export function toLegacyGatewayMode(value: {
   transportKind?: GatewayTransportKind;
 }): GatewayMode {
   if (value.backendKind === 'hermes') return 'hermes';
+  if (value.backendKind === 'agentzero') return 'agentzero';
   return value.transportKind ?? 'custom';
 }
 
@@ -198,6 +247,7 @@ export function getGatewayThinkingLevels(
   return selectByBackend<ThinkingLevel[]>(input, {
     openclaw: [...THINKING_LEVELS],
     hermes: [...HERMES_THINKING_LEVELS],
+    agentzero: [...AGENTZERO_THINKING_LEVELS],
   });
 }
 
@@ -216,13 +266,17 @@ export function getGatewayThinkingLevels(
  */
 export function selectByBackend<T>(
   input: GatewayLike | GatewayBackendKind | null | undefined,
-  options: { openclaw: T; hermes: T; youmind?: T },
+  options: { openclaw: T; hermes: T; youmind?: T; agentzero?: T },
 ): T {
   const kind = typeof input === 'string' && isGatewayBackendKind(input)
     ? input
     : resolveGatewayBackendKind(input as GatewayLike | null | undefined);
   if (kind === 'hermes') return options.hermes;
   if (kind === 'youmind') return options.youmind ?? options.openclaw;
+  // Agent Zero falls back to openclaw branches at call sites that haven't
+  // opted in yet — same pattern as youmind. Wire a dedicated `agentzero`
+  // option as each screen learns its AZ behavior.
+  if (kind === 'agentzero') return options.agentzero ?? options.openclaw;
   return options.openclaw;
 }
 
@@ -244,6 +298,7 @@ export function resolveGlobalMainSessionKey(
     openclaw: null,
     hermes: 'main',
     youmind: 'main',
+    agentzero: 'main',
   });
 }
 
@@ -251,6 +306,7 @@ export function getGatewayModeLabel(input: GatewayLike): string {
   const backendKind = resolveGatewayBackendKind(input);
   const transportKind = resolveGatewayTransportKind(input);
   if (backendKind === 'hermes') return 'Hermes';
+  if (backendKind === 'agentzero') return 'Agent Zero';
   if (backendKind === 'youmind') return 'YouMind';
   switch (transportKind) {
     case 'relay':
@@ -277,11 +333,13 @@ export function buildGatewayDefaultName(input: {
   const host = parseHost(input.url);
   const baseLabel = backendKind === 'hermes'
     ? 'Hermes'
-    : backendKind === 'youmind'
-      ? 'YouMind'
-      : transportKind === 'relay'
-        ? 'Relay'
-        : 'Custom';
+    : backendKind === 'agentzero'
+      ? 'Agent Zero'
+      : backendKind === 'youmind'
+        ? 'YouMind'
+        : transportKind === 'relay'
+          ? 'Relay'
+          : 'Custom';
   if (host) return `${baseLabel} (${host})`;
   return `${baseLabel} Gateway ${input.index}`;
 }
