@@ -238,7 +238,13 @@ const OFFICE_DEV_PORT = 5174;
 const DEV_URL_OVERRIDE = process.env.EXPO_PUBLIC_OFFICE_DEV_URL;
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const officeHtmlString: string = require('./office-game/dist/office-inline.js').html;
+let officeHtmlString: string = '';
+try {
+  officeHtmlString = require('./office-game/dist/office-inline.js').html;
+} catch (e) {
+  console.warn('Office game bundle not found, using fallback:', (e as Error).message);
+  officeHtmlString = '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body></body></html>';
+}
 
 const OFFICE_HTML_BG_REGEX = /(html,\s*body\s*\{[^}]*background-color:\s*)([^;]+)(;)/;
 
@@ -247,10 +253,13 @@ const GATEWAY_KEEPALIVE_INTERVAL_MS = 5_000;
 
 function resolveDevHost(): string {
   const scriptURL = (NativeModules as { SourceCode?: { scriptURL?: string } }).SourceCode?.scriptURL;
-  if (!scriptURL) return 'localhost';
+  if (!scriptURL) {
+    return 'localhost';
+  }
   try {
-    const { hostname } = new URL(scriptURL);
-    return hostname || 'localhost';
+    const url = new URL(scriptURL);
+    const hostname = url.hostname || 'localhost';
+    return hostname;
   } catch {
     return 'localhost';
   }
@@ -258,7 +267,9 @@ function resolveDevHost(): string {
 
 function resolveOfficeDevUrl(): string {
   const override = DEV_URL_OVERRIDE?.trim();
-  if (override) return override;
+  if (override) {
+    return override;
+  }
   const host = resolveDevHost();
   return `http://${host}:${OFFICE_DEV_PORT}`;
 }

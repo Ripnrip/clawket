@@ -1,5 +1,5 @@
 import React, { useCallback, useRef } from 'react';
-import { InteractionManager, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RouteProp, useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import { useTabBarHeight } from '../../hooks/useTabBarHeight';
@@ -103,7 +103,7 @@ export function ConfigScreen(): React.JSX.Element {
     const pendingRequest = consumePendingConfigAddConnectionRequest();
     if (!pendingRequest) return;
     let cancelled = false;
-    const task = InteractionManager.runAfterInteractions(() => {
+    const task = requestIdleCallback(() => {
       requestAnimationFrame(() => {
         if (cancelled) return;
         openRequestedAddConnection(pendingRequest);
@@ -111,7 +111,7 @@ export function ConfigScreen(): React.JSX.Element {
     });
     return () => {
       cancelled = true;
-      task.cancel();
+      cancelIdleCallback(task);
     };
   }, [isFocused, openRequestedAddConnection]);
 

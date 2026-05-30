@@ -4,7 +4,6 @@ import {
   Alert,
   Animated as RNAnimated,
   Image,
-  InteractionManager,
   Platform,
   Pressable,
   StyleProp,
@@ -404,7 +403,7 @@ const YouMindDrawerContent = React.memo(function YouMindDrawerContent({
       const previous = prevProgressRef.current;
       prevProgressRef.current = current;
       if (current === 1 && previous < 1) {
-        InteractionManager.runAfterInteractions(() => {
+        requestIdleCallback(() => {
           void onRefreshSessions();
         });
       }
@@ -1062,7 +1061,7 @@ export function YouMindChatTab(): React.JSX.Element {
     if (!selectedSkill) return;
     const trackedSkill = selectedSkill;
     setSelectedSkill(null);
-    InteractionManager.runAfterInteractions(() => {
+    requestIdleCallback(() => {
       analyticsEvents.chatSkillSelected({
         source: 'youmind_chat',
         action: 'clear',
@@ -1075,7 +1074,7 @@ export function YouMindChatTab(): React.JSX.Element {
 
   const handleSelectRecommendedSkill = React.useCallback((skill: YouMindSkillSummary) => {
     setSelectedSkill(skill);
-    InteractionManager.runAfterInteractions(() => {
+    requestIdleCallback(() => {
       analyticsEvents.chatSkillSelected({
         source: 'youmind_chat_recommended',
         action: 'select',
@@ -1101,7 +1100,7 @@ export function YouMindChatTab(): React.JSX.Element {
   const handleSelectSkill = React.useCallback((skill: YouMindSkillSummary) => {
     setSelectedSkill(skill);
     skillPickerRef.current?.dismiss();
-    InteractionManager.runAfterInteractions(() => {
+    requestIdleCallback(() => {
       analyticsEvents.chatSkillSelected({
         source: 'youmind_chat_picker',
         action: 'select',

@@ -1,11 +1,13 @@
 jest.mock('react-native', () => ({
-  InteractionManager: {
-    runAfterInteractions: (callback: () => void) => callback(),
-  },
   Platform: {
     OS: 'ios',
   },
 }));
+
+// requestIdleCallback is not available in Node.js test env
+if (typeof requestIdleCallback === 'undefined') {
+  (globalThis as any).requestIdleCallback = (cb: () => void) => cb();
+}
 
 jest.mock('expo-store-review', () => ({
   isAvailableAsync: jest.fn(),

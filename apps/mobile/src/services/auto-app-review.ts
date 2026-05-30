@@ -1,4 +1,4 @@
-import { InteractionManager, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import * as StoreReview from 'expo-store-review';
 import { APP_PACKAGE_VERSION } from '../constants/app-version';
 import { AutoAppReviewState, StorageService } from './storage';
@@ -32,7 +32,7 @@ export function shouldAttemptAutomaticReview(params: {
 
 function runAfterInteractions(): Promise<void> {
   return new Promise((resolve) => {
-    InteractionManager.runAfterInteractions(() => resolve());
+    requestIdleCallback(() => resolve());
   });
 }
 

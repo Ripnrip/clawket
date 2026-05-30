@@ -1,5 +1,5 @@
 import React from 'react';
-import { InteractionManager, Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { CommonActions } from '@react-navigation/native';
 import { DrawerContentComponentProps, createDrawerNavigator, useDrawerProgress } from '@react-navigation/drawer';
 import Animated, { useAnimatedStyle, interpolate } from 'react-native-reanimated';
@@ -104,7 +104,7 @@ const ChatDrawerContent = React.memo(function ChatDrawerContent({
       prevProgressRef.current = cur;
       // Drawer just finished opening (progress crossed 1.0)
       if (cur === 1 && prev < 1) {
-        InteractionManager.runAfterInteractions(() => {
+        requestIdleCallback(() => {
           void refreshSessions();
         });
       }
