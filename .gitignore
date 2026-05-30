@@ -23,4 +23,7 @@ apps/mobile/ios/build/
 apps/mobile/office-game/dist/
 apps/mobile/office-game/node_modules/
 
+# Claude Code / oh-my-claudecode session state
+.omc/
+
 apps/*/wrangler.local.toml
