@@ -52,7 +52,9 @@ export function formatDayLabel(dateStr: string): string {
   const [, y, m, d] = match;
   const date = new Date(Date.UTC(Number(y), Number(m) - 1, Number(d)));
   if (Number.isNaN(date.valueOf())) return dateStr;
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  // Format in UTC to match how the date was constructed. Without timeZone: 'UTC'
+  // a viewer west of UTC sees "Jan 14" for a "2024-01-15" input.
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
 export function pct(part: number, total: number): number {
