@@ -22,6 +22,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RotateCcw, SendHorizontal } from 'lucide-react-native';
+import { useTabBarHeight } from '../../hooks/useTabBarHeight';
 import { useAppContext } from '../../contexts/AppContext';
 import { useAppTheme, type AppTheme } from '../../theme';
 import { FontSize, FontWeight, Radius, Space } from '../../theme/tokens';
@@ -68,6 +69,10 @@ export function AgentZeroChatTab(): React.JSX.Element {
   const { theme } = useAppTheme();
   const styles = useMemo(() => createStyles(theme.colors), [theme]);
   const insets = useSafeAreaInsets();
+  // Bottom tab bar overlays the bottom of the screen on iOS; subtract its
+  // height so the composer sits above it instead of behind it. Falls back to
+  // 0 in non-tab contexts (modal flows).
+  const tabBarHeight = useTabBarHeight();
   const { t } = useTranslation(['chat', 'common']);
 
   const bridgeUrl = config?.agentzero?.bridgeUrl ?? '';
@@ -190,11 +195,17 @@ export function AgentZeroChatTab(): React.JSX.Element {
     );
   }
 
+  // Composer bottom padding has to clear:
+  //   - the tab bar (iOS native bottom tabs draw OVER the screen content)
+  //   - the home indicator (insets.bottom on devices without a tab bar)
+  //   - never less than Space.md so the input doesn't kiss the edge
+  const composerBottomInset = Math.max(Space.md, tabBarHeight, insets.bottom);
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? tabBarHeight : 0}
     >
       <View style={[styles.header, { paddingTop: insets.top + Space.sm }]}>
         <View style={styles.headerTextWrap}>
@@ -236,7 +247,7 @@ export function AgentZeroChatTab(): React.JSX.Element {
         </View>
       ) : null}
 
-      <View style={[styles.composerWrap, { paddingBottom: Math.max(Space.md, insets.bottom) }]}>
+      <View style={[styles.composerWrap, { paddingBottom: composerBottomInset }]}>
         <TextInput
           style={styles.composerInput}
           value={draft}
