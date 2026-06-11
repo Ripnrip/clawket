@@ -665,6 +665,23 @@ export function ConfigScreenLayout({ insets, tabBarHeight, controller }: Props):
           </>
         ) : null}
 
+        <Text style={styles.sectionHeader}>{t('NOTIFICATIONS')}</Text>
+
+        <View style={styles.card}>
+          <View style={[styles.row, styles.toggleRow]}>
+            <View style={styles.toggleLabels}>
+              <Text style={styles.rowLabel}>{t('Push Notifications')}</Text>
+              <Text style={styles.rowMeta}>{t('Receive alerts when your agent has updates')}</Text>
+            </View>
+            <ThemedSwitch
+              value={controller.pushNotificationsEnabled}
+              onValueChange={controller.onPushNotificationsToggle}
+              trackColor={{ false: theme.colors.borderStrong, true: theme.colors.primarySoft }}
+              thumbColor={controller.pushNotificationsEnabled ? theme.colors.primary : theme.colors.surfaceMuted}
+            />
+          </View>
+        </View>
+
         <Text style={styles.sectionHeader}>{t('APPEARANCE')}</Text>
 
         <View style={styles.card}>

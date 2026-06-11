@@ -30,10 +30,13 @@
           "es"
         ],
         "CFBundleDevelopmentRegion": "en",
-        "UIPrefersShowingLanguageSettings": true
+        "UIPrefersShowingLanguageSettings": true,
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       },
       "appleTeamId": "ZWT3N8XKE7",
-      "buildNumber": "260530003"
+      "buildNumber": "260611001"
     },
     "android": {
       "adaptiveIcon": {
@@ -99,6 +102,12 @@
         }
       ],
       "expo-localization",
+      [
+        "expo-notifications",
+        {
+          "enableBackgroundRemoteNotifications": true
+        }
+      ],
       "./plugins/with-locales",
       "./plugins/with-alternate-app-icons",
       "./plugins/with-android-release-signing",

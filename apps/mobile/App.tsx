@@ -1,6 +1,6 @@
 import 'react-native-get-random-values';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, AppState, AppStateStatus, NativeModules, Platform, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, AppState, AppStateStatus, NativeModules, Platform, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
@@ -61,6 +61,7 @@ import {
   shouldShowChatReplyNotification,
 } from './src/services/chat-notifications';
 import { StorageService } from './src/services/storage';
+import { registerForPushNotifications, unregisterPushNotifications } from './src/services/push-notifications';
 import { getGatewayBackendCapabilities, resolveGatewayBackendKind, resolveGlobalMainSessionKey } from './src/services/gateway-backends';
 import { resolveGatewayCacheScopeId } from './src/services/gateway-cache-scope';
 import { analyticsEvents } from './src/services/analytics/events';
@@ -119,6 +120,7 @@ export default function App(): React.JSX.Element {
     loading,
     nodeCapabilityToggles,
     nodeEnabled,
+    pushNotificationsEnabled,
     setAccentId,
     setActiveGatewayConfigId,
     setCanvasEnabled,
@@ -130,6 +132,7 @@ export default function App(): React.JSX.Element {
     setExecApprovalEnabled,
     setNodeCapabilityToggles,
     setNodeEnabled,
+    setPushNotificationsEnabled,
     setShowAgentAvatar,
     setShowModelUsage,
     setSpeechRecognitionLanguage,
@@ -164,6 +167,7 @@ export default function App(): React.JSX.Element {
           nodeClient={nodeClient}
           config={config}
           debugMode={debugMode}
+          pushNotificationsEnabled={pushNotificationsEnabled}
           showAgentAvatar={showAgentAvatar}
           showModelUsage={showModelUsage}
           execApprovalEnabled={execApprovalEnabled}
@@ -178,6 +182,29 @@ export default function App(): React.JSX.Element {
           onDebugToggle={(enabled) => {
             setDebugMode(enabled);
             StorageService.setDebugMode(enabled);
+          }}
+          onPushNotificationsToggle={(enabled) => {
+            // 🔔 Optimistically flip, then reconcile with the real registration outcome —
+            // a push prompt can be denied, so we never leave the switch lying about its state.
+            setPushNotificationsEnabled(enabled);
+            void (async () => {
+              if (enabled) {
+                const result = await registerForPushNotifications();
+                if (!result.ok) {
+                  // 🌩️ Registration didn't take — snap the toggle back to OFF.
+                  setPushNotificationsEnabled(false);
+                  if (result.reason === 'permission-denied') {
+                    Alert.alert(
+                      i18next.t('Notifications are disabled', { ns: 'config' }),
+                      i18next.t('Enable notifications in iOS Settings to receive alerts.', { ns: 'config' }),
+                      [{ text: i18next.t('OK', { ns: 'config' }) }],
+                    );
+                  }
+                }
+              } else {
+                await unregisterPushNotifications();
+              }
+            })();
           }}
           onShowAgentAvatarToggle={(show) => {
             setShowAgentAvatar(show);
@@ -325,6 +352,7 @@ type AppContentProps = {
   nodeClient: NodeClient;
   config: GatewayConfig | null;
   debugMode: boolean;
+  pushNotificationsEnabled: boolean;
   showAgentAvatar: boolean;
   showModelUsage: boolean;
   execApprovalEnabled: boolean;
@@ -337,6 +365,7 @@ type AppContentProps = {
   initialAgentId: string | null;
   initialChatPreview: import('./src/services/storage').LastOpenedSessionSnapshot | null;
   onDebugToggle: (enabled: boolean) => void;
+  onPushNotificationsToggle: (enabled: boolean) => void;
   onShowAgentAvatarToggle: (show: boolean) => void;
   onShowModelUsageToggle: (enabled: boolean) => void;
   onExecApprovalToggle: (enabled: boolean) => void;
@@ -356,6 +385,7 @@ function AppContent({
   nodeClient,
   config,
   debugMode,
+  pushNotificationsEnabled,
   showAgentAvatar,
   showModelUsage,
   execApprovalEnabled,
@@ -368,6 +398,7 @@ function AppContent({
   initialAgentId,
   initialChatPreview,
   onDebugToggle,
+  onPushNotificationsToggle,
   onShowAgentAvatarToggle,
   onShowModelUsageToggle,
   onExecApprovalToggle,
@@ -794,6 +825,7 @@ function AppContent({
       foregroundEpoch,
       config,
       debugMode,
+      pushNotificationsEnabled,
       showAgentAvatar,
       showModelUsage,
       execApprovalEnabled,
@@ -821,6 +853,7 @@ function AppContent({
       clearPendingAgentSwitch,
       setAgents,
       onDebugToggle,
+      onPushNotificationsToggle,
       onShowAgentAvatarToggle,
       onShowModelUsageToggle,
       onExecApprovalToggle,
@@ -906,6 +939,7 @@ function AppContent({
       config,
       currentAgentId,
       debugMode,
+      pushNotificationsEnabled,
       execApprovalEnabled,
       gateway,
       showAgentAvatar,
@@ -921,6 +955,7 @@ function AppContent({
       pendingMainSessionSwitch,
       openChatFromNotification,
       onDebugToggle,
+      onPushNotificationsToggle,
       onCanvasToggle,
       onChatAppearanceChange,
       onChatFontSizeChange,

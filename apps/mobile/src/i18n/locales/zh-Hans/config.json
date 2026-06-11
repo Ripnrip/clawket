@@ -536,5 +536,11 @@
   "Web Search": "Web Search",
   "OpenClaw will confirm every command before it runs.": "OpenClaw 会在每条命令运行前先询问确认。",
   "YouMind": "YouMind",
-  "YouMind sign-in happens inside Chat after you save this connection.": "保存此连接后，请在 Chat 页面中登录 YouMind。"
+  "YouMind sign-in happens inside Chat after you save this connection.": "保存此连接后，请在 Chat 页面中登录 YouMind。",
+  "NOTIFICATIONS": "通知",
+  "Push Notifications": "推送通知",
+  "Receive alerts when your agent has updates": "当你的智能体有更新时接收提醒",
+  "Notifications are disabled": "通知已关闭",
+  "Enable notifications in iOS Settings to receive alerts.": "请在 iOS 设置中开启通知以接收提醒。",
+  "OK": "好"
 }

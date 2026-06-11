@@ -56,6 +56,7 @@ export function useAppBootstrap({ gateway, nodeClient }: Props) {
     DEFAULT_NODE_CAPABILITY_TOGGLES,
   );
   const [debugMode, setDebugMode] = useState(false);
+  const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState(false);
   const [showAgentAvatar, setShowAgentAvatar] = useState(true);
   const [showModelUsage, setShowModelUsage] = useState(true);
   const [execApprovalEnabled, setExecApprovalEnabled] = useState(false);
@@ -85,6 +86,7 @@ export function useAppBootstrap({ gateway, nodeClient }: Props) {
       gatewayConfigsStatePromise,
       configPromise,
       StorageService.getDebugMode(),
+      StorageService.getPushNotificationsEnabled(),
       StorageService.getShowAgentAvatar(),
       StorageService.getThemeMode(),
       StorageService.getAccentColor(),
@@ -103,6 +105,7 @@ export function useAppBootstrap({ gateway, nodeClient }: Props) {
         gatewayConfigsState,
         savedConfig,
         debug,
+        pushEnabled,
         showAvatar,
         savedThemeMode,
         savedAccentId,
@@ -134,6 +137,7 @@ export function useAppBootstrap({ gateway, nodeClient }: Props) {
           ?? (savedCurrentAgentId?.trim() || PRIMARY_CACHED_AGENT_ID);
         setActiveGatewayConfigId(gatewayScopeId);
         setDebugMode(debug);
+        setPushNotificationsEnabled(pushEnabled);
         setShowAgentAvatar(showAvatar);
         setShowModelUsage(savedShowModelUsage);
         setExecApprovalEnabled(savedExecApproval);
@@ -200,6 +204,7 @@ export function useAppBootstrap({ gateway, nodeClient }: Props) {
     loading,
     nodeCapabilityToggles,
     nodeEnabled,
+    pushNotificationsEnabled,
     setAccentId,
     setActiveGatewayConfigId,
     setCanvasEnabled,
@@ -211,6 +216,7 @@ export function useAppBootstrap({ gateway, nodeClient }: Props) {
     setExecApprovalEnabled,
     setNodeCapabilityToggles,
     setNodeEnabled,
+    setPushNotificationsEnabled,
     setShowAgentAvatar,
     setShowModelUsage,
     setSpeechRecognitionLanguage,

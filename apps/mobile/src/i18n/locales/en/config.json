@@ -536,5 +536,11 @@
   "Web Search": "Web Search",
   "OpenClaw will confirm every command before it runs.": "OpenClaw will confirm every command before it runs.",
   "YouMind": "YouMind",
-  "YouMind sign-in happens inside Chat after you save this connection.": "YouMind sign-in happens inside Chat after you save this connection."
+  "YouMind sign-in happens inside Chat after you save this connection.": "YouMind sign-in happens inside Chat after you save this connection.",
+  "NOTIFICATIONS": "NOTIFICATIONS",
+  "Push Notifications": "Push Notifications",
+  "Receive alerts when your agent has updates": "Receive alerts when your agent has updates",
+  "Notifications are disabled": "Notifications are disabled",
+  "Enable notifications in iOS Settings to receive alerts.": "Enable notifications in iOS Settings to receive alerts.",
+  "OK": "OK"
 }

@@ -520,4 +520,22 @@ export const analyticsEvents = {
   }): void {
     captureAnalyticsEvent('lifetime_upgrade_announcement_dismissed', properties);
   },
+
+  // 🔔 Push notification lifecycle — outcome events, not UI noise
+  pushPermissionRequested(properties: {
+    platform: 'ios' | 'android';
+    granted: boolean;
+  }): void {
+    captureAnalyticsEvent('push_permission_requested', properties);
+  },
+
+  pushTokenRegistered(properties: {
+    platform: 'ios' | 'android';
+  }): void {
+    captureAnalyticsEvent('push_token_registered', properties);
+  },
+
+  pushNotificationsDisabled(properties: Record<string, never>): void {
+    captureAnalyticsEvent('push_notifications_disabled', properties);
+  },
 };

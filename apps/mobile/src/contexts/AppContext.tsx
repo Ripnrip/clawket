@@ -31,6 +31,7 @@ export type AppContextType = {
   foregroundEpoch: number;
   config: GatewayConfig | null;
   debugMode: boolean;
+  pushNotificationsEnabled: boolean;
   showAgentAvatar: boolean;
   officeChatRequest: {
     sessionKey: string;
@@ -60,6 +61,7 @@ export type AppContextType = {
   chatAppearance: ChatAppearanceSettings;
   speechRecognitionLanguage: SpeechRecognitionLanguage;
   onDebugToggle: (enabled: boolean) => void;
+  onPushNotificationsToggle: (enabled: boolean) => void;
   onShowAgentAvatarToggle: (show: boolean) => void;
   onShowModelUsageToggle: (enabled: boolean) => void;
   onExecApprovalToggle: (enabled: boolean) => void;

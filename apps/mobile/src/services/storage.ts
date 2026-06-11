@@ -161,6 +161,11 @@ const KEYS = {
   chatFontSize: 'clawket.chatFontSize.v1',
   chatAppearance: 'clawket.chatAppearance.v1',
   speechRecognitionLanguage: 'clawket.speechRecognitionLanguage.v1',
+  // 🔔 Push notifications — opt-in flag + the RAW APNs device token.
+  // NOTE: distinct from `deviceTokenPrefix` above, which is the RELAY auth
+  // credential, NOT an APNs push token. Never conflate the two.
+  pushNotificationsEnabled: 'clawket.pushNotificationsEnabled.v1',
+  apnsPushToken: 'clawket.apnsPushToken.v1',
   lastSessionKey: 'clawket.lastSessionKey.v1',
   lastOpenedSessionSnapshotPrefix: 'clawket.lastOpenedSessionSnapshot.v1',
   cachedAgentIdentityPrefix: 'clawket.cachedAgentIdentity.v1',
@@ -1233,6 +1238,30 @@ export const StorageService = {
       return raw;
     }
     return 'system';
+  },
+
+  // 🔔 The Opt-In Ledger — remembers whether the seeker welcomed push alerts.
+  // Default OFF: a notification prompt should never ambush the user at boot.
+  async setPushNotificationsEnabled(enabled: boolean): Promise<void> {
+    await SecureStore.setItemAsync(KEYS.pushNotificationsEnabled, enabled ? '1' : '0', SECURE_OPTIONS);
+  },
+
+  async getPushNotificationsEnabled(): Promise<boolean> {
+    const raw = await SecureStore.getItemAsync(KEYS.pushNotificationsEnabled, SECURE_OPTIONS);
+    return raw === '1'; // default OFF unless explicitly enabled
+  },
+
+  // 📮 The Token Vault — stores the raw APNs device token for the Hermes sender.
+  async setApnsPushToken(token: string | null): Promise<void> {
+    if (!token) {
+      await SecureStore.deleteItemAsync(KEYS.apnsPushToken, SECURE_OPTIONS);
+      return;
+    }
+    await SecureStore.setItemAsync(KEYS.apnsPushToken, token, SECURE_OPTIONS);
+  },
+
+  async getApnsPushToken(): Promise<string | null> {
+    return SecureStore.getItemAsync(KEYS.apnsPushToken, SECURE_OPTIONS);
   },
 
   async setLastSessionKey(key: string, scopeId?: string): Promise<void> {
