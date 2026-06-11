@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useIsFocused } from '@react-navigation/native';
 import { analyticsEvents } from '../../../services/analytics/events';
+import { triggerErrorHaptic, triggerSuccessHaptic } from '../../../services/haptics';
 import { useAppContext } from '../../../contexts/AppContext';
 import type { GatewayModelProviderInfo } from '../../../services/gateway-backend-operations';
 import { ConnectionState, GatewayBackendKind, SessionInfo } from '../../../types';
@@ -55,6 +56,16 @@ type Props = {
   submitMessage: (text: string, images: []) => Promise<boolean> | boolean | void;
 };
 
+// 🎚️ The Retry Commander — Orchestrating Exponential Backoff
+interface RetryState {
+  attempt: number;
+  lastError: string | null;
+}
+
+const MAX_RETRY_ATTEMPTS = 3;
+const BASE_RETRY_DELAY_MS = 1000;
+const RETRY_BACKOFF_MULTIPLIER = 2;
+
 export function useChatModelPicker({
   connectionState,
   gateway,
@@ -72,7 +83,14 @@ export function useChatModelPicker({
   const [availableProviders, setAvailableProviders] = useState<GatewayModelProviderInfo[]>([]);
   const [currentModel, setCurrentModel] = useState<string | null>(null);
   const [currentModelProvider, setCurrentModelProvider] = useState<string | null>(null);
+
   const lastForegroundEpochRef = useRef<number | null>(null);
+
+  // 🎒 The Last-Good Cache — Preserves sanity across transient disconnects
+  const lastGoodModelsRef = useRef<ModelInfo[]>([]);
+  const lastGoodProvidersRef = useRef<GatewayModelProviderInfo[]>([]);
+  const retryStateRef = useRef<RetryState>({ attempt: 0, lastError: null });
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Hermes and OpenClaw expose different model-selection APIs on the
   // gateway client: Hermes uses `getModelSelectionState` / `setModelSelection`
@@ -85,15 +103,27 @@ export function useChatModelPicker({
   const usesHermesModelApi = gateway.getBackendKind() === 'hermes';
 
   const hydrateHermesModelSelection = useCallback((selection: ModelSelectionState) => {
-    setAvailableModels(selection.models ?? []);
-    setAvailableProviders(selection.providers ?? []);
+    const models = selection.models ?? [];
+    const providers = selection.providers ?? [];
+    setAvailableModels(models);
+    setAvailableProviders(providers);
     setCurrentModel(selection.currentModel?.trim() || null);
     setCurrentModelProvider(selection.currentProvider?.trim() || null);
+    // 🎒 Cache successful load directly from fresh data (no stale-closure read)
+    if (models.length > 0) {
+      lastGoodModelsRef.current = models;
+      lastGoodProvidersRef.current = providers;
+    }
   }, []);
 
   const hydrateOpenClawModels = useCallback((models: ModelInfo[]) => {
     setAvailableModels(models);
     setAvailableProviders([]);
+    // 🎒 Cache successful load directly from fresh data
+    if (models.length > 0) {
+      lastGoodModelsRef.current = models;
+      lastGoodProvidersRef.current = [];
+    }
   }, []);
 
   const hydrateOpenClawCurrentModel = useCallback((sessions: SessionInfo[]) => {
@@ -106,32 +136,98 @@ export function useChatModelPicker({
     setCurrentModelProvider(fallback?.modelProvider?.trim() || null);
   }, [sessionKey]);
 
+  /**
+   * 🎚️ The Resilient Loader — Loads models with retry and last-good cache
+   *
+   * Retry strategy:
+   * - 1st failure: immediate retry (1s delay)
+   * - 2nd failure: exponential backoff (2s delay)
+   * - 3rd failure: give up, show error + last-good cache
+   *
+   * The last-good cache ensures users can still select from previously-loaded
+   * models during transient network hiccups or gateway reconnections.
+   */
   const loadModelsForPicker = useCallback(async () => {
+    // Clear any pending retry
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+
     if (connectionState !== 'ready') {
-      setModelPickerError('Gateway is not connected.');
-      setAvailableModels([]);
-      setAvailableProviders([]);
+      const errorMsg = 'Gateway is not connected.';
+      setModelPickerError(errorMsg);
+      // 🎒 Restore from last-good cache on disconnect
+      if (lastGoodModelsRef.current.length > 0) {
+        setAvailableModels(lastGoodModelsRef.current);
+        setAvailableProviders(lastGoodProvidersRef.current);
+      } else {
+        setAvailableModels([]);
+        setAvailableProviders([]);
+      }
       setModelPickerLoading(false);
       return;
     }
 
     setModelPickerLoading(true);
     setModelPickerError(null);
-    try {
-      if (usesHermesModelApi) {
-        hydrateHermesModelSelection(await gateway.getModelSelectionState());
-      } else {
-        hydrateOpenClawModels(await gateway.listModels());
+
+    const attemptLoad = async (attemptNumber: number): Promise<void> => {
+      try {
+        if (usesHermesModelApi) {
+          // 🐍 Providers arrive pre-normalized from gateway-backend-operations.ts.
+          // hydrateHermesModelSelection caches fresh data into the last-good refs.
+          hydrateHermesModelSelection(await gateway.getModelSelectionState());
+        } else {
+          hydrateOpenClawModels(await gateway.listModels());
+        }
+
+        // ✅ Success — reset retry state
+        retryStateRef.current = { attempt: 0, lastError: null };
+        setModelPickerError(null);
+        setModelPickerLoading(false);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+
+        if (attemptNumber < MAX_RETRY_ATTEMPTS) {
+          // 🔄 Retry with exponential backoff
+          const delay = BASE_RETRY_DELAY_MS * Math.pow(RETRY_BACKOFF_MULTIPLIER, attemptNumber);
+          retryStateRef.current = {
+            attempt: attemptNumber + 1,
+            lastError: msg,
+          };
+
+          retryTimeoutRef.current = setTimeout(() => {
+            attemptLoad(attemptNumber + 1);
+          }, delay);
+
+          // Update error to show retry in progress
+          setModelPickerError(`Loading models... (retry ${attemptNumber + 1}/${MAX_RETRY_ATTEMPTS})`);
+        } else {
+          // 🛑 Max retries reached — show error + restore from cache
+          setModelPickerError(msg || 'Failed to load models after multiple attempts.');
+          setModelPickerLoading(false);
+
+          // 🎒 Restore from last-good cache
+          if (lastGoodModelsRef.current.length > 0) {
+            setAvailableModels(lastGoodModelsRef.current);
+            setAvailableProviders(lastGoodProvidersRef.current);
+          } else {
+            setAvailableModels([]);
+            setAvailableProviders([]);
+          }
+        }
       }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setModelPickerError(msg || 'Failed to load models.');
-      setAvailableModels([]);
-      setAvailableProviders([]);
-    } finally {
-      setModelPickerLoading(false);
-    }
-  }, [connectionState, gateway, usesHermesModelApi, hydrateHermesModelSelection, hydrateOpenClawModels]);
+    };
+
+    await attemptLoad(0);
+  }, [
+    connectionState,
+    gateway,
+    usesHermesModelApi,
+    hydrateHermesModelSelection,
+    hydrateOpenClawModels,
+  ]);
 
   const refreshCurrentModel = useCallback(async () => {
     if (!usesHermesModelApi) {
@@ -184,6 +280,17 @@ export function useChatModelPicker({
     void refreshCurrentModel();
   }, [foregroundEpoch, isFocused, refreshCurrentModel]);
 
+  // 🧹 The Janitor — Sweep away pending retries when the hook unmounts,
+  // preventing the dreaded "setState on unmounted component" specter.
+  useEffect(() => {
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
   const onSelectModel = useCallback((selected: ModelInfo) => {
     const providerModel = resolveProviderModel(selected);
     if (!providerModel.trim()) return;
@@ -212,9 +319,13 @@ export function useChatModelPicker({
         scope: 'global',
       }).then((selection) => {
         hydrateHermesModelSelection(selection);
+        // 🎉 A triumphant purr — the model has answered the summons
+        triggerSuccessHaptic();
       }).catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : String(err);
         setModelPickerError(msg || 'Failed to switch model.');
+        // 🌩️ A firm rumble — the switch hit a temporary intermission
+        triggerErrorHaptic();
         void refreshCurrentModel();
       });
       return;

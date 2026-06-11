@@ -96,12 +96,83 @@ export type GatewayBackendOperations = {
   getBaseUrl(config: GatewayConfig | null): string | null;
 };
 
+/**
+ * 🐍 The Snake_case → CamelCase Harmonizer
+ *
+ * Hermes bridge returns provider objects in snake_case:
+ *   { slug, name, is_current, total_models, api_url }
+ *
+ * Our types expect camelCase:
+ *   { slug, name, isCurrent, totalModels, apiUrl }
+ *
+ * This translator bends the snake to our camel convention.
+ * Also handles missing/unknown providers gracefully.
+ */
+export function normalizeProviderInfo(provider: unknown): GatewayModelProviderInfo {
+  if (!provider || typeof provider !== 'object') {
+    return {
+      slug: '',
+      name: 'Unknown Provider',
+      isCurrent: false,
+      models: [],
+      totalModels: 0,
+    };
+  }
+
+  const p = provider as Record<string, unknown>;
+
+  // 🎨 Extract models array (handle both snake and camel variations)
+  const rawModels = p.models ?? p.model_list ?? [];
+  const models = Array.isArray(rawModels)
+    ? rawModels.map(String)
+    : [];
+
+  // 🐍 Extract fields preferring camel, falling back to snake
+  return {
+    slug: String(p.slug ?? p.provider_slug ?? ''),
+    name: String(
+      p.name ??
+      p.provider_name ??
+      p.display_name ??
+      (p.slug || p.provider_slug || 'Unknown Provider')
+    ),
+    isCurrent: Boolean(p.isCurrent ?? p.is_current ?? false),
+    models,
+    totalModels: Number(p.totalModels ?? p.total_models ?? p.model_count ?? models.length),
+    source: p.source as string | undefined,
+    // 🌐 apiUrl vs api_url vs base_url vs baseUrl
+    apiUrl: (p.apiUrl ?? p.api_url ?? p.base_url ?? p.baseUrl ?? '') as string | undefined,
+  };
+}
+
+/**
+ * 🛡️ Defensive array extraction — handles both wrapped and bare responses
+ */
+export function extractModels<T>(result: unknown, key: string = 'models'): T[] {
+  if (Array.isArray(result)) {
+    return result as T[];
+  }
+  if (result && typeof result === 'object') {
+    const obj = result as Record<string, unknown>;
+    const models = obj[key];
+    if (Array.isArray(models)) {
+      return models as T[];
+    }
+  }
+  return [];
+}
+
 const sharedOperations = {
   async listModels(request: GatewayRequestFn): Promise<GatewayModelInfo[]> {
-    const result = await request<{
-      models?: GatewayModelInfo[];
-    }>('models.list', {});
-    return result?.models ?? [];
+    const result = await request<any>('models.list', {});
+    // 🛡️ Defensive unwrap: handle both { models: [...] } and bare [...]
+    if (Array.isArray(result)) {
+      return result as GatewayModelInfo[];
+    }
+    if (result && typeof result === 'object' && result?.models && Array.isArray(result.models)) {
+      return result.models as GatewayModelInfo[];
+    }
+    return [];
   },
   async getConfig(request: GatewayRequestFn): Promise<GatewayConfigSnapshot> {
     const result = await request<{
@@ -123,13 +194,22 @@ const sharedOperations = {
     };
   },
   async getModelSelectionState(request: GatewayRequestFn): Promise<GatewayModelSelectionState> {
-    const result = await request<GatewayModelSelectionState & { models?: GatewayModelInfo[] }>('model.get', {});
+    const result = await request<any>('model.get', {});
+    // 🛡️ Defensive models extraction
+    const models = extractModels<GatewayModelInfo>(result, 'models');
+
+    // 🐍 Normalize provider objects (handles snake_case from Hermes)
+    const rawProviders = result?.providers ?? result?.provider_list ?? [];
+    const providers = Array.isArray(rawProviders)
+      ? rawProviders.map(normalizeProviderInfo)
+      : [];
+
     return {
-      currentModel: result?.currentModel ?? '',
-      currentProvider: result?.currentProvider ?? '',
-      currentBaseUrl: result?.currentBaseUrl ?? '',
-      models: result?.models ?? [],
-      providers: result?.providers ?? [],
+      currentModel: result?.currentModel ?? result?.current_model ?? '',
+      currentProvider: result?.currentProvider ?? result?.current_provider ?? '',
+      currentBaseUrl: result?.currentBaseUrl ?? result?.current_base_url ?? '',
+      models,
+      providers,
       note: result?.note ?? null,
     };
   },
@@ -137,15 +217,22 @@ const sharedOperations = {
     request: GatewayRequestFn,
     params: { model: string; provider?: string; scope?: 'global' | 'session'; sessionKey?: string | null },
   ): Promise<GatewayModelSelectionWriteResult> {
-    const result = await request<GatewayModelSelectionWriteResult>('model.set', params);
+    const result = await request<any>('model.set', params);
+    // 🛡️ Defensive extraction with snake_case fallbacks
+    const models = extractModels<GatewayModelInfo>(result, 'models');
+    const rawProviders = result?.providers ?? result?.provider_list ?? [];
+    const providers = Array.isArray(rawProviders)
+      ? rawProviders.map(normalizeProviderInfo)
+      : [];
+
     return {
-      ok: result?.ok ?? false,
-      scope: result?.scope ?? 'global',
-      currentModel: result?.currentModel ?? '',
-      currentProvider: result?.currentProvider ?? '',
-      currentBaseUrl: result?.currentBaseUrl ?? '',
-      models: result?.models ?? [],
-      providers: result?.providers ?? [],
+      ok: Boolean(result?.ok ?? false),
+      scope: (result?.scope ?? 'global') as 'global',
+      currentModel: result?.currentModel ?? result?.current_model ?? '',
+      currentProvider: result?.currentProvider ?? result?.current_provider ?? '',
+      currentBaseUrl: result?.currentBaseUrl ?? result?.current_base_url ?? '',
+      models,
+      providers,
       note: result?.note ?? null,
     };
   },

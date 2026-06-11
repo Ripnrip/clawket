@@ -98,7 +98,8 @@ describe('useChatModelPicker', () => {
     expect(result.current.modelPickerError).toBeNull();
   });
 
-  it('keeps picker open and exposes error when model loading fails', async () => {
+  it('keeps picker open and exposes error after exhausting retries when model loading fails', async () => {
+    jest.useFakeTimers();
     const gateway = {
       listModels: jest.fn().mockRejectedValue(new Error('boom')),
       listSessions: jest.fn(),
@@ -123,9 +124,73 @@ describe('useChatModelPicker', () => {
       await Promise.resolve();
     });
 
+    // 🔄 First failure → schedules a retry rather than surfacing the raw error
     expect(result.current.modelPickerVisible).toBe(true);
+    expect(result.current.modelPickerError).toContain('retry 1/3');
+
+    // ⏩ Advance through all retry backoffs (1s, 2s, 4s) flushing microtasks between
+    for (let i = 0; i < 3; i += 1) {
+      await act(async () => {
+        jest.runOnlyPendingTimers();
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+    }
+
+    // 🛑 After MAX_RETRY_ATTEMPTS the real error surfaces and cache stays empty
     expect(result.current.modelPickerError).toBe('boom');
     expect(result.current.availableModels).toEqual([]);
+    expect(gateway.listModels).toHaveBeenCalledTimes(4); // initial + 3 retries
+    jest.useRealTimers();
+  });
+
+  it('restores the last-good model list when the gateway disconnects', async () => {
+    let connState: 'ready' | 'connecting' = 'ready';
+    const gateway = {
+      listModels: jest.fn().mockResolvedValue([
+        { id: 'gpt-5', name: 'gpt-5', provider: 'openai' },
+        { id: 'claude-opus', name: 'claude-opus', provider: 'anthropic' },
+      ]),
+      listSessions: jest.fn(),
+      getModelSelectionState: jest.fn(),
+      getBackendKind: () => 'openclaw' as const,
+      setModelSelection: jest.fn(),
+    };
+
+    const { result, rerender } = renderHook<
+      ReturnType<typeof useChatModelPicker>,
+      { connectionState: 'ready' | 'connecting' }
+    >(
+      ({ connectionState }) =>
+        useChatModelPicker({
+          connectionState,
+          gateway,
+          sessionKey: 'agent:main:main',
+          setInput: jest.fn(),
+          setSessions: jest.fn(),
+          submitMessage: jest.fn(),
+        }),
+      { initialProps: { connectionState: 'ready' as const } },
+    );
+
+    // ✅ First load populates the list AND the last-good cache
+    expect(result.current.openModelPicker()).toBe(true);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(result.current.availableModels).toHaveLength(2);
+
+    // 🔌 Gateway drops — reloading should restore from cache, not blank out
+    connState = 'connecting';
+    rerender({ connectionState: 'connecting' as const });
+    await act(async () => {
+      result.current.retryModelPickerLoad();
+      await Promise.resolve();
+    });
+
+    expect(result.current.modelPickerError).toBe('Gateway is not connected.');
+    // 🎒 The cached models survive the disconnect so the user isn't stranded
+    expect(result.current.availableModels).toHaveLength(2);
   });
 
   it('fills /model command instead of sending when not ready', () => {

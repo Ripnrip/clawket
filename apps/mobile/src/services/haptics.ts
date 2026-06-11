@@ -16,6 +16,21 @@ export function triggerSelectionHaptic(): void {
   fireAndForget(Haptics.selectionAsync());
 }
 
+// 🎉 The Triumphant Buzz — a gentle success purr for a job well done
+export function triggerSuccessHaptic(): void {
+  fireAndForget(Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success));
+}
+
+// 🌙 The Cautionary Hum — a soft nudge when something needs a second glance
+export function triggerWarningHaptic(): void {
+  fireAndForget(Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning));
+}
+
+// 🌩️ The Stormy Rumble — a firm tap when the show hits a temporary intermission
+export function triggerErrorHaptic(): void {
+  fireAndForget(Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error));
+}
+
 export function triggerDragStartHaptic(): void {
   triggerLightImpact();
 }
