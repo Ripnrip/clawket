@@ -14,6 +14,8 @@ import {
   getApnsDeviceToken,
   addPushListeners,
   getStoredApnsToken,
+  syncPushTokenToGateway,
+  revokePushTokenFromGateway,
 } from './push-notifications';
 import { StorageService } from './storage';
 
@@ -148,6 +150,78 @@ describe('push-notifications service', () => {
       expect(setEnabled).toHaveBeenCalledWith(false);
       setToken.mockRestore();
       setEnabled.mockRestore();
+    });
+  });
+
+  describe('syncPushTokenToGateway', () => {
+    function makeGateway() {
+      return {
+        registerPushToken: jest.fn(() => Promise.resolve({ ok: true })),
+        unregisterPushToken: jest.fn(() => Promise.resolve({ ok: true })),
+      };
+    }
+
+    it('registers the stored token when opted in', async () => {
+      jest.spyOn(StorageService, 'getPushNotificationsEnabled').mockResolvedValue(true);
+      jest.spyOn(StorageService, 'getApnsPushToken').mockResolvedValue('tok-abc');
+      const gw = makeGateway();
+
+      const ok = await syncPushTokenToGateway(gw);
+
+      expect(ok).toBe(true);
+      expect(gw.registerPushToken).toHaveBeenCalledWith(
+        expect.objectContaining({ token: 'tok-abc', bundleId: 'com.binarybros.clawket' }),
+      );
+    });
+
+    it('is a no-op when not opted in', async () => {
+      jest.spyOn(StorageService, 'getPushNotificationsEnabled').mockResolvedValue(false);
+      const gw = makeGateway();
+
+      expect(await syncPushTokenToGateway(gw)).toBe(false);
+      expect(gw.registerPushToken).not.toHaveBeenCalled();
+    });
+
+    it('is a no-op when there is no stored token', async () => {
+      jest.spyOn(StorageService, 'getPushNotificationsEnabled').mockResolvedValue(true);
+      jest.spyOn(StorageService, 'getApnsPushToken').mockResolvedValue(null);
+      const gw = makeGateway();
+
+      expect(await syncPushTokenToGateway(gw)).toBe(false);
+      expect(gw.registerPushToken).not.toHaveBeenCalled();
+    });
+
+    it('returns false (never throws) when the backend rejects push.register', async () => {
+      jest.spyOn(StorageService, 'getPushNotificationsEnabled').mockResolvedValue(true);
+      jest.spyOn(StorageService, 'getApnsPushToken').mockResolvedValue('tok-abc');
+      const gw = makeGateway();
+      gw.registerPushToken.mockRejectedValueOnce(new Error('[unknown_method] push.register'));
+
+      await expect(syncPushTokenToGateway(gw)).resolves.toBe(false);
+    });
+  });
+
+  describe('revokePushTokenFromGateway', () => {
+    it('unregisters the stored token, swallowing backend errors', async () => {
+      jest.spyOn(StorageService, 'getApnsPushToken').mockResolvedValue('tok-xyz');
+      const gw = {
+        registerPushToken: jest.fn(),
+        unregisterPushToken: jest.fn(() => Promise.reject(new Error('nope'))),
+      };
+
+      await expect(revokePushTokenFromGateway(gw)).resolves.toBeUndefined();
+      expect(gw.unregisterPushToken).toHaveBeenCalledWith({ token: 'tok-xyz' });
+    });
+
+    it('skips when no token is stored', async () => {
+      jest.spyOn(StorageService, 'getApnsPushToken').mockResolvedValue(null);
+      const gw = {
+        registerPushToken: jest.fn(),
+        unregisterPushToken: jest.fn(),
+      };
+
+      await revokePushTokenFromGateway(gw);
+      expect(gw.unregisterPushToken).not.toHaveBeenCalled();
     });
   });
 

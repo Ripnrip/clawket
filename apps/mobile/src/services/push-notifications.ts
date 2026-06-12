@@ -142,6 +142,53 @@ export async function getStoredApnsToken(): Promise<string | null> {
   return StorageService.getApnsPushToken();
 }
 
+// 🪟 The minimal gateway surface we need to register a token — keeps this
+// service decoupled from the full GatewayClient type.
+export type PushTokenGateway = {
+  registerPushToken(params: { token: string; platform: 'ios' | 'android'; bundleId: string }): Promise<{ ok: boolean }>;
+  unregisterPushToken(params: { token: string }): Promise<{ ok: boolean }>;
+};
+
+const IOS_BUNDLE_ID = 'com.binarybros.clawket';
+
+/**
+ * 📡 Sync to backend — push the stored APNs token to the connected gateway.
+ *
+ * Call after a connection becomes ready, but ONLY when the user has opted in.
+ * Returns true if the backend acknowledged. Never throws — a backend that
+ * doesn't implement push.register (older Hermes / Agent Zero) just yields false,
+ * and the connection is unaffected.
+ */
+export async function syncPushTokenToGateway(gateway: PushTokenGateway): Promise<boolean> {
+  try {
+    const enabled = await StorageService.getPushNotificationsEnabled();
+    if (!enabled) return false;
+    const token = await StorageService.getApnsPushToken();
+    if (!token) return false;
+    const result = await gateway.registerPushToken({
+      token,
+      platform: Platform.OS === 'ios' ? 'ios' : 'android',
+      bundleId: IOS_BUNDLE_ID,
+    });
+    return result.ok;
+  } catch {
+    return false; // unsupported backend / transient error — non-fatal
+  }
+}
+
+/**
+ * 🚪 Tell the backend to forget this device's token (on opt-out). Never throws.
+ */
+export async function revokePushTokenFromGateway(gateway: PushTokenGateway): Promise<void> {
+  try {
+    const token = await StorageService.getApnsPushToken();
+    if (!token) return;
+    await gateway.unregisterPushToken({ token });
+  } catch {
+    // non-fatal
+  }
+}
+
 /**
  * 👂 The Listening Ears — wire foreground-received + tap-response handlers.
  * Returns a cleanup fn; use it as the teardown in a useEffect.

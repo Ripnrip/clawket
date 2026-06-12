@@ -713,6 +713,17 @@ export class GatewayClient {
     return this.getBackendOperations().listModels(this.sendBackendRequest);
   }
 
+  // 🔔 Register this device's raw APNs token with the backend so it can target
+  // pushes here. Safe to call on any backend — unsupported backends reply with
+  // an error frame the caller catches (connection stays open).
+  public async registerPushToken(params: { token: string; platform: 'ios' | 'android'; bundleId: string }): Promise<{ ok: boolean }> {
+    return this.getBackendOperations().registerPushToken(this.sendBackendRequest, params);
+  }
+
+  public async unregisterPushToken(params: { token: string }): Promise<{ ok: boolean }> {
+    return this.getBackendOperations().unregisterPushToken(this.sendBackendRequest, params);
+  }
+
   public async getModelSelectionState(): Promise<{
     currentModel: string;
     currentProvider: string;

@@ -23,6 +23,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RotateCcw, SendHorizontal } from 'lucide-react-native';
 import { useTabBarHeight } from '../../hooks/useTabBarHeight';
+import { useLiveActivityForRun } from './hooks/useLiveActivityForRun';
 import { useAppContext } from '../../contexts/AppContext';
 import { useAppTheme, type AppTheme } from '../../theme';
 import { FontSize, FontWeight, Radius, Space } from '../../theme/tokens';
@@ -91,6 +92,14 @@ export function AgentZeroChatTab(): React.JSX.Element {
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+
+  // 🎬 Drive an iOS Live Activity while an Agent Zero run streams.
+  // Ships dark (no-op) unless the native widget target + flag are present.
+  useLiveActivityForRun({
+    isRunning: sending,
+    title: projectName ? `Agent Zero: ${projectName}` : 'Agent Zero',
+    status: 'Streaming…',
+  });
   const listRef = useRef<FlatList<ChatBubble>>(null);
 
   // Clean up any in-flight stream if the screen unmounts.

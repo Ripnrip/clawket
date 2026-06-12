@@ -93,6 +93,8 @@ export type GatewayBackendOperations = {
   setAgentFile(request: GatewayRequestFn, agentId: string, name: string, content: string): Promise<{ ok: boolean }>;
   fetchUsage(request: GatewayRequestFn, params: { startDate: string; endDate: string }): Promise<UsageResult>;
   fetchCostSummary(request: GatewayRequestFn, params: { startDate: string; endDate: string }): Promise<CostSummary>;
+  registerPushToken(request: GatewayRequestFn, params: { token: string; platform: 'ios' | 'android'; bundleId: string }): Promise<{ ok: boolean }>;
+  unregisterPushToken(request: GatewayRequestFn, params: { token: string }): Promise<{ ok: boolean }>;
   getBaseUrl(config: GatewayConfig | null): string | null;
 };
 
@@ -235,6 +237,23 @@ const sharedOperations = {
       providers,
       note: result?.note ?? null,
     };
+  },
+  // 🔔 Push registration — shared across backends. Backends that don't yet
+  // implement push.register reply with an error frame, which the caller catches
+  // gracefully (the connection stays open). The token is the RAW APNs token.
+  async registerPushToken(
+    request: GatewayRequestFn,
+    params: { token: string; platform: 'ios' | 'android'; bundleId: string },
+  ): Promise<{ ok: boolean }> {
+    const result = await request<{ ok?: boolean }>('push.register', params);
+    return { ok: result?.ok ?? false };
+  },
+  async unregisterPushToken(
+    request: GatewayRequestFn,
+    params: { token: string },
+  ): Promise<{ ok: boolean }> {
+    const result = await request<{ ok?: boolean }>('push.unregister', params);
+    return { ok: result?.ok ?? false };
   },
   async patchConfig(request: GatewayRequestFn, raw: string, baseHash: string): Promise<GatewayConfigWriteResult> {
     const result = await request<{

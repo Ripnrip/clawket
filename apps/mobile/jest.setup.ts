@@ -118,6 +118,15 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn(() => Promise.resolve()),
 }));
 
+// Mock expo-modules-core: requireOptionalNativeModule returns null by default
+// (matches a build where the optional native module isn't compiled in — e.g.
+// the Live Activities widget target). Suites needing a present module override
+// this locally.
+jest.mock('expo-modules-core', () => ({
+  requireOptionalNativeModule: () => null,
+  requireNativeModule: () => ({}),
+}));
+
 // Mock expo-haptics
 jest.mock('expo-haptics', () => ({
   impactAsync: jest.fn(),

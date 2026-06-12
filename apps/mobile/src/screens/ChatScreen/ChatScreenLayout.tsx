@@ -33,6 +33,7 @@ import { ChatMessagePane } from './components/ChatMessagePane';
 import { ChatOverlays } from './components/ChatOverlays';
 import { renderChatMessageBubble } from './components/renderChatMessageBubble';
 import { useChatController } from './hooks/useChatController';
+import { useLiveActivityForRun } from './hooks/useLiveActivityForRun';
 import { useChatKeyboardLayout } from './hooks/useChatKeyboardLayout';
 import { useCanvasController } from './hooks/useCanvasController';
 import { getChatHeaderSyncState } from './hooks/chatSyncPolicy';
@@ -367,6 +368,14 @@ export function ChatScreenLayout({ controller, insets, onOpenSidebar, onAddGatew
   const currentModelLabel = controller.currentModel ?? currentLabel?.model ?? null;
   const currentModelProvider = controller.currentModelProvider ?? currentLabel?.modelProvider ?? null;
   const currentModelHeaderLabel = currentModelLabel;
+
+  // 🎬 Drive an iOS Live Activity while a Hermes/OpenClaw run is active.
+  // Ships dark (no-op) unless the native widget target + flag are present.
+  useLiveActivityForRun({
+    isRunning: controller.isSending,
+    title: currentLabel ? sessionLabel(currentLabel, { currentAgentName }) : (t('Agent task')),
+    status: currentModelHeaderLabel ?? undefined,
+  });
   const gatewayConfigId = useMemo(
     () => resolveGatewayCacheScopeId({ activeConfigId: activeGatewayConfigId, config }),
     [activeGatewayConfigId, config],

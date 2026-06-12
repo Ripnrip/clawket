@@ -61,7 +61,12 @@ import {
   shouldShowChatReplyNotification,
 } from './src/services/chat-notifications';
 import { StorageService } from './src/services/storage';
-import { registerForPushNotifications, unregisterPushNotifications } from './src/services/push-notifications';
+import {
+  registerForPushNotifications,
+  unregisterPushNotifications,
+  syncPushTokenToGateway,
+  revokePushTokenFromGateway,
+} from './src/services/push-notifications';
 import { getGatewayBackendCapabilities, resolveGatewayBackendKind, resolveGlobalMainSessionKey } from './src/services/gateway-backends';
 import { resolveGatewayCacheScopeId } from './src/services/gateway-cache-scope';
 import { analyticsEvents } from './src/services/analytics/events';
@@ -190,7 +195,10 @@ export default function App(): React.JSX.Element {
             void (async () => {
               if (enabled) {
                 const result = await registerForPushNotifications();
-                if (!result.ok) {
+                if (result.ok) {
+                  // 📡 Hand the fresh token to the connected backend so it can target us.
+                  void syncPushTokenToGateway(gateway);
+                } else {
                   // 🌩️ Registration didn't take — snap the toggle back to OFF.
                   setPushNotificationsEnabled(false);
                   if (result.reason === 'permission-denied') {
@@ -202,6 +210,8 @@ export default function App(): React.JSX.Element {
                   }
                 }
               } else {
+                // 🚪 Tell the backend to forget us BEFORE clearing the local token.
+                await revokePushTokenFromGateway(gateway);
                 await unregisterPushNotifications();
               }
             })();
@@ -623,6 +633,9 @@ function AppContent({
           loadAgentAvatars().then(setAgentAvatars).catch(() => {});
         }
         prevReadyRef.current = true;
+        // 🔔 Re-announce our push token on every fresh connection (idempotent;
+        // no-op unless the user opted in + a token exists + backend supports it).
+        void syncPushTokenToGateway(gateway);
       } else {
         prevReadyRef.current = false;
       }
