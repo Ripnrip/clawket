@@ -24,7 +24,8 @@ type PublicEnv = Partial<Record<
   | 'EXPO_PUBLIC_YOUMIND_GOOGLE_IOS_CLIENT_ID'
   | 'EXPO_PUBLIC_YOUMIND_GOOGLE_ANDROID_CLIENT_ID'
   | 'EXPO_PUBLIC_YOUMIND_GOOGLE_WEB_CLIENT_ID'
-  | 'EXPO_PUBLIC_YOUMIND_APP_SECRET',
+  | 'EXPO_PUBLIC_YOUMIND_APP_SECRET'
+  | 'EXPO_PUBLIC_LIVE_ACTIVITIES_ENABLED',
   string | undefined
 >> & Partial<NodeJS.ProcessEnv>;
 
@@ -51,6 +52,7 @@ const STATIC_PUBLIC_ENV: PublicEnv = {
   EXPO_PUBLIC_YOUMIND_GOOGLE_ANDROID_CLIENT_ID: process.env.EXPO_PUBLIC_YOUMIND_GOOGLE_ANDROID_CLIENT_ID,
   EXPO_PUBLIC_YOUMIND_GOOGLE_WEB_CLIENT_ID: process.env.EXPO_PUBLIC_YOUMIND_GOOGLE_WEB_CLIENT_ID,
   EXPO_PUBLIC_YOUMIND_APP_SECRET: process.env.EXPO_PUBLIC_YOUMIND_APP_SECRET,
+  EXPO_PUBLIC_LIVE_ACTIVITIES_ENABLED: process.env.EXPO_PUBLIC_LIVE_ACTIVITIES_ENABLED,
 };
 
 function parseBooleanEnv(value: string | undefined | null): boolean | null {
@@ -176,7 +178,15 @@ export function buildSupportEmailUrl(email: string | null): string | null {
   return `mailto:${email}`;
 }
 
+// 🎬 Live Activities ship DARK: the capability (widget target + Info.plist key)
+// is present in the binary, but no Activity is ever started unless this flag is
+// explicitly on AND the native module is available. Defaults to OFF.
+export function resolveLiveActivitiesEnabled(env: PublicEnv = STATIC_PUBLIC_ENV): boolean {
+  return parseBooleanEnv(env.EXPO_PUBLIC_LIVE_ACTIVITIES_ENABLED) === true;
+}
+
 export const publicAppLinks = resolvePublicAppLinks();
 export const publicAnalyticsConfig = resolvePublicAnalyticsConfig();
 export const publicRevenueCatConfig = resolvePublicRevenueCatConfig();
 export const publicYouMindAuthConfig = resolvePublicYouMindAuthConfig();
+export const liveActivitiesEnabled = resolveLiveActivitiesEnabled();
