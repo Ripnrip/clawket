@@ -1075,10 +1075,14 @@ export function useChatController({
         const hasRunningChat = !!currentRunIdRef.current;
         // Refresh visible history after transport freshness has been re-established.
         scheduleForegroundRefresh(awayMs, hasRunningChat);
+        // Always re-verify the socket on foreground: iOS freezes the WS in the
+        // background and it often returns half-open (state still "ready" but
+        // dead), so probeConnection forces a reconnect. Previously this was
+        // gated on hasRunningChat, leaving an idle open chat with a dead socket.
+        if (awayMs >= 12_000 || gateway.getConnectionState() !== "ready") {
+          void gateway.probeConnection();
+        }
         if (hasRunningChat) {
-          if (awayMs >= 12_000 || gateway.getConnectionState() !== "ready") {
-            void gateway.probeConnection();
-          }
           if (history.sessionKey) {
             void requestRunRecovery(history.sessionKey, "app-active");
           }

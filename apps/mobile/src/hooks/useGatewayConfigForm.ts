@@ -93,7 +93,7 @@ function deriveHermesBridgeConfig(
 }
 
 /**
- * Agent Zero wants a base HTTP URL (e.g. http://agent-habitat.tail48d4cc.ts.net:5000).
+ * Agent Zero wants a base HTTP URL (e.g. https://agent-habitat.capybara-loggerhead.ts.net:8443).
  * We accept ws://… too as a courtesy — users frequently paste their Hermes-style URL
  * by accident — and rewrite to http(s).
  */

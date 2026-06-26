@@ -43,7 +43,7 @@ export interface HermesGatewayConfig {
  * in the `a0` CLI). When unset, AZ uses the default project.
  */
 export interface AgentZeroGatewayConfig {
-  /** Base HTTP URL of the AZ instance (no trailing slash). e.g. http://agent-habitat.tail48d4cc.ts.net:5000 */
+  /** Base HTTP URL of the AZ instance (no trailing slash). e.g. https://agent-habitat.capybara-loggerhead.ts.net:8443 */
   bridgeUrl: string;
   displayName?: string;
   /** Optional AZ project to scope the conversation to. */

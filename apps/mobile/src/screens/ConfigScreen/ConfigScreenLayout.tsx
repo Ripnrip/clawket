@@ -115,7 +115,7 @@ function getUrlPlaceholder(input: {
   if (input.backendKind === 'agentzero') {
     // AZ wants the base HTTP URL of the web server (port 5000 by default).
     // The /api/api_message{,_async} + /api/api_log_get paths are added by the client.
-    return 'http://agent-habitat.tail48d4cc.ts.net:5000';
+    return 'https://agent-habitat.capybara-loggerhead.ts.net:8443';
   }
   if (input.backendKind === 'hermes') {
     switch (input.transportKind) {

@@ -646,7 +646,7 @@ describe('useGatewayConfigForm', () => {
 
     await act(async () => {
       result.current.setEditorBackendKind('agentzero');
-      result.current.setEditorUrl('http://agent-habitat.tail48d4cc.ts.net:5000/');
+      result.current.setEditorUrl('https://agent-habitat.capybara-loggerhead.ts.net:8443/');
       result.current.setEditorAuthMethod('token');
       result.current.setEditorToken('6Gv7AhbIbZ8CEjUb');
       result.current.setEditorName('Habitat AZ');
@@ -662,13 +662,13 @@ describe('useGatewayConfigForm', () => {
       backendKind: 'agentzero',
       transportKind: 'custom',
       mode: 'agentzero',
-      url: 'http://agent-habitat.tail48d4cc.ts.net:5000/',
+      url: 'https://agent-habitat.capybara-loggerhead.ts.net:8443/',
       token: '6Gv7AhbIbZ8CEjUb',
       password: undefined,
       hermes: undefined,
       agentzero: {
         // Trailing slash stripped, no path appended.
-        bridgeUrl: 'http://agent-habitat.tail48d4cc.ts.net:5000',
+        bridgeUrl: 'https://agent-habitat.capybara-loggerhead.ts.net:8443',
       },
     });
     expect(onSaved).toHaveBeenCalled();
@@ -700,7 +700,7 @@ describe('useGatewayConfigForm', () => {
 
     await act(async () => {
       result.current.setEditorBackendKind('agentzero');
-      result.current.setEditorUrl('http://agent-habitat.tail48d4cc.ts.net:5000');
+      result.current.setEditorUrl('https://agent-habitat.capybara-loggerhead.ts.net:8443');
       // no token
     });
 
