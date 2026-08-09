@@ -11,8 +11,6 @@ export { SuccessScreen } from './SuccessScreen';
 
 export { shouldShowOnboarding } from './shouldShowOnboarding';
 
-export { onboardingAnalytics } from './onboardingAnalytics';
-
 export {
   hapticLight,
   hapticMedium,

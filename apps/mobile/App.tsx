@@ -166,7 +166,7 @@ export default function App(): React.JSX.Element {
         onAccentChange={setAccentId}
       >
         <ProPaywallProvider>
-          <OnboardingNavigator
+          <OnboardingRoot
             isFirstLaunch={config === null}
             gateway={gateway}
             onComplete={(nextConfig: GatewayConfig) => {
@@ -269,6 +269,41 @@ export default function App(): React.JSX.Element {
         />
       </ProPaywallProvider>
     </AppProviders>
+  );
+}
+
+function OnboardingRoot(props: {
+  isFirstLaunch: boolean;
+  gateway: GatewayClient;
+  onComplete: (config: GatewayConfig) => void;
+  onSkip: () => void;
+}): React.JSX.Element {
+  const { theme } = useAppTheme();
+  const navigationTheme = useMemo<NavigationTheme>(() => {
+    const base = theme.scheme === 'dark' ? NavigationDarkTheme : NavigationDefaultTheme;
+    return {
+      ...base,
+      colors: {
+        ...base.colors,
+        primary: theme.colors.primary,
+        background: theme.colors.background,
+        card: theme.colors.surface,
+        text: theme.colors.text,
+        border: theme.colors.border,
+        notification: theme.colors.primary,
+      },
+    };
+  }, [theme]);
+
+  return (
+    <NavigationContainer theme={navigationTheme}>
+      <OnboardingNavigator
+        isFirstLaunch={props.isFirstLaunch}
+        gateway={props.gateway}
+        onComplete={props.onComplete}
+        onSkip={props.onSkip}
+      />
+    </NavigationContainer>
   );
 }
 

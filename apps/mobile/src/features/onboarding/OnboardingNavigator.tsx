@@ -10,13 +10,17 @@ import { StorageService } from '../../services/storage';
 import type { GatewayConfig } from '../../types';
 import type { QRScanResult } from '../../screens/ConfigScreen/qrPayload';
 import { QRScannerScreen } from '../../screens/ConfigScreen/QRScannerScreen';
+import {
+  claimRelayPairing,
+  type GatewayScanPayload,
+} from '../../hooks/gatewayScanFlow';
 import { WelcomeScreen } from './WelcomeScreen';
 import { ConnectMethodScreen } from './ConnectMethodScreen';
 import { ManualEntryScreen } from './ManualEntryScreen';
 import { ConnectingScreen } from './ConnectingScreen';
 import { ComingSoonScreen } from './ComingSoonScreen';
 import { SuccessScreen } from './SuccessScreen';
-import { onboardingAnalytics } from './onboardingAnalytics';
+import { analyticsEvents } from '../../services/analytics/events';
 import { hapticError } from './haptics';
 import type { ConnectMethod, OnboardingComplete, OnboardingSkip } from './types';
 
@@ -54,6 +58,9 @@ export function OnboardingNavigator({ isFirstLaunch, gateway, onComplete, onSkip
   const selectedMethodRef = useRef<ConnectMethod>('manual');
   const connectionStartedAtRef = useRef<number | null>(null);
 
+  // In-flight relay claim deduplication (mirrors useGatewayConfigForm pattern)
+  const relayClaimInFlightRef = useRef<Map<string, Promise<GatewayScanPayload>>>(new Map());
+
   // Connecting error state
   const [connectingError, setConnectingError] = useState<{ message: string } | null>(null);
 
@@ -63,9 +70,19 @@ export function OnboardingNavigator({ isFirstLaunch, gateway, onComplete, onSkip
     async (config: GatewayConfig): Promise<GatewayConfig> => {
       // Save config to storage
       await StorageService.setGatewayConfig(config);
-      // Configure the gateway client
+      // Configure and connect the gateway client
       gateway.configure(config);
-      // Mark onboarding as completed
+      gateway.connect();
+
+      // Probe the connection to verify the gateway is reachable.
+      // Give it up to 10s to establish and verify the connection.
+      const GATEWAY_PROBE_TIMEOUT_MS = 10_000;
+      const isReachable = await gateway.probeConnection(GATEWAY_PROBE_TIMEOUT_MS);
+      if (!isReachable) {
+        throw new Error('Could not reach the gateway. Please check the URL and try again.');
+      }
+
+      // Only mark onboarding as completed once the gateway is verified
       await StorageService.setOnboardingCompleted();
       return config;
     },
@@ -88,7 +105,7 @@ export function OnboardingNavigator({ isFirstLaunch, gateway, onComplete, onSkip
           const durationMs = connectionStartedAtRef.current
             ? Date.now() - connectionStartedAtRef.current
             : 0;
-          onboardingAnalytics.connectionResolved({
+          analyticsEvents.onboardingConnectionResolved({
             method,
             result: 'success',
             duration_ms: durationMs,
@@ -111,7 +128,7 @@ export function OnboardingNavigator({ isFirstLaunch, gateway, onComplete, onSkip
           const durationMs = connectionStartedAtRef.current
             ? Date.now() - connectionStartedAtRef.current
             : 0;
-          onboardingAnalytics.connectionResolved({
+          analyticsEvents.onboardingConnectionResolved({
             method,
             result: 'failure',
             duration_ms: durationMs,
@@ -160,21 +177,43 @@ export function OnboardingNavigator({ isFirstLaunch, gateway, onComplete, onSkip
 
   const handleQrScanned = useCallback(
     (result: QRScanResult, navigation: OnboardingNavigationProp) => {
-      onboardingAnalytics.qrScanned({ success: true });
+      analyticsEvents.onboardingQrScanned({ success: true });
 
-      // Build a GatewayConfig from the QR scan result
-      const config: GatewayConfig = {
-        url: result.url,
-        token: result.token,
-        password: result.password,
-        backendKind: result.backendKind,
-        transportKind: result.transportKind,
-        mode: result.mode,
-        ...(result.hermes ? { hermes: result.hermes } : {}),
-        ...(result.relay ? { relay: result.relay } : {}),
-      };
+      // If the QR result contains relay data with an access code, claim it first
+      // before building a GatewayConfig. This mirrors the ConfigScreen flow.
+      const claimTask = result.relay?.accessCode
+        ? claimRelayPairing(result as GatewayScanPayload, relayClaimInFlightRef)
+        : Promise.resolve(result as GatewayScanPayload);
 
-      handleConnect(config, 'qr', navigation);
+      void claimTask
+        .then((resolved) => {
+          const config: GatewayConfig = {
+            url: resolved.url,
+            token: resolved.token,
+            password: resolved.password,
+            backendKind: resolved.backendKind,
+            transportKind: resolved.transportKind,
+            mode: resolved.mode,
+            ...(resolved.hermes ? { hermes: resolved.hermes } : {}),
+            ...(resolved.relay ? { relay: resolved.relay } : {}),
+          };
+          handleConnect(config, 'qr', navigation);
+        })
+        .catch((err: unknown) => {
+          const message = err instanceof Error ? err.message : 'Could not claim this pairing code.';
+          analyticsEvents.onboardingConnectionResolved({
+            method: 'qr',
+            result: 'failure',
+            duration_ms: 0,
+            error_code: 'relay_claim_error',
+          });
+          void hapticError();
+          setConnectingError({ message });
+          setTimeout(() => {
+            setConnectingError(null);
+            navigation.goBack();
+          }, 2500);
+        });
     },
     [handleConnect],
   );
@@ -235,7 +274,7 @@ export function OnboardingNavigator({ isFirstLaunch, gateway, onComplete, onSkip
   const trackStepViewed = useCallback((step: string) => {
     if (lastStepViewedRef.current === step) return;
     lastStepViewedRef.current = step;
-    onboardingAnalytics.stepViewed({ step });
+    analyticsEvents.onboardingStepViewed({ step });
   }, []);
 
   return (

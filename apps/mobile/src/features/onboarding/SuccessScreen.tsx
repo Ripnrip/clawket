@@ -16,7 +16,7 @@ import { useAppTheme } from '../../theme';
 import { FontSize, FontWeight, Radius, Space, SpringPreset, TimingPreset } from '../../theme/tokens';
 import type { GatewayConfig } from '../../types';
 import type { ConnectMethod, OnboardingComplete } from './types';
-import { onboardingAnalytics } from './onboardingAnalytics';
+import { analyticsEvents } from '../../services/analytics/events';
 import { hapticSuccess } from './haptics';
 import { LottieAnimationView } from './LottieView';
 
@@ -69,7 +69,7 @@ export function SuccessScreen({ config, method, startedAt, onComplete }: Props):
     if (!hasFiredRef.current) {
       hasFiredRef.current = true;
       const totalDuration = Date.now() - startedAt;
-      onboardingAnalytics.completed({
+      analyticsEvents.onboardingCompleted({
         method,
         total_duration_ms: totalDuration,
       });

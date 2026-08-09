@@ -15,7 +15,7 @@ import { ChevronLeft, Link, QrCode, Terminal, Wifi } from 'lucide-react-native';
 import { useAppTheme } from '../../theme';
 import { FontSize, FontWeight, Radius, Space, SpringPreset, TimingPreset } from '../../theme/tokens';
 import type { ConnectMethod } from './types';
-import { onboardingAnalytics } from './onboardingAnalytics';
+import { analyticsEvents } from '../../services/analytics/events';
 import { hapticMedium } from './haptics';
 
 type Props = {
@@ -88,7 +88,7 @@ export function ConnectMethodScreen({ onSelect, onBack }: Props): React.JSX.Elem
   }));
 
   const handleSelect = (method: ConnectMethod): void => {
-    onboardingAnalytics.connectMethodSelected({ method, source: 'connect_method_screen' });
+    analyticsEvents.onboardingConnectMethodSelected({ method, source: 'connect_method_screen' });
     void hapticMedium();
     onSelect(method);
   };

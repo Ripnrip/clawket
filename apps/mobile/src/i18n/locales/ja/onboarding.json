@@ -1,0 +1,57 @@
+{
+  "onboarding": {
+    "welcome": {
+      "title": "Clawket へようこそ",
+      "subtitle": "AI エージェントゲートウェイに接続してチャットを開始",
+      "getStarted": "はじめる",
+      "haveConnection": "すでに接続情報があります"
+    },
+    "connectMethod": {
+      "title": "どの方法で接続しますか？",
+      "subtitle": "接続方法を選択してください",
+      "qr": {
+        "title": "QRコードをスキャン",
+        "description": "エージェントゲートウェイのQRコードをスキャン"
+      },
+      "nearby": {
+        "title": "近くのデバイス",
+        "description": "近くのデバイスを検索",
+        "beta": "ベータ版"
+      },
+      "manual": {
+        "title": "手動入力",
+        "description": "ゲートウェイURLとトークンを手動で入力"
+      },
+      "deeplink": {
+        "title": "招待リンク",
+        "description": "メッセージやAirDropから招待リンクを開く"
+      }
+    },
+    "success": {
+      "title": "設定完了！",
+      "subtitle": "エージェントゲートウェイに接続されました",
+      "startChatting": "チャットを開始"
+    },
+    "manual": {
+      "title": "手動セットアップ",
+      "urlLabel": "ゲートウェイ URL",
+      "urlPlaceholder": "https://your-gateway.example.com",
+      "tokenLabel": "アクセストークン",
+      "tokenPlaceholder": "トークンを入力",
+      "connect": "接続",
+      "errorRequired": "ゲートウェイURLを入力してください",
+      "connecting": "接続中..."
+    },
+    "connecting": {
+      "title": "接続中...",
+      "subtitle": "ゲートウェイ接続を検証しています"
+    },
+    "comingSoon": {
+      "title": "近日対応",
+      "subtitle": "この機能はまだご利用いただけません",
+      "goBack": "戻る"
+    },
+    "back": "戻る",
+    "cancel": "キャンセル"
+  }
+}

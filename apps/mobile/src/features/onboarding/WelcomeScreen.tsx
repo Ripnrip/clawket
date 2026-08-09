@@ -15,7 +15,7 @@ import Animated, {
 import { ArrowRight, MessageCircle } from 'lucide-react-native';
 import { useAppTheme } from '../../theme';
 import { FontSize, FontWeight, Radius, Space, SpringPreset, TimingPreset } from '../../theme/tokens';
-import { onboardingAnalytics } from './onboardingAnalytics';
+import { analyticsEvents } from '../../services/analytics/events';
 import { hapticLight } from './haptics';
 import { LottieAnimationView } from './LottieView';
 
@@ -89,13 +89,13 @@ export function WelcomeScreen({ isFirstLaunch, onGetStarted, onSkip }: Props): R
   }));
 
   const handleGetStarted = (): void => {
-    onboardingAnalytics.started({ is_first_launch: isFirstLaunch });
+    analyticsEvents.onboardingStarted({ is_first_launch: isFirstLaunch });
     void hapticLight();
     onGetStarted();
   };
 
   const handleSkip = (): void => {
-    onboardingAnalytics.skipped({ step: 'welcome' });
+    analyticsEvents.onboardingSkipped({ step: 'welcome' });
     void hapticLight();
     onSkip();
   };

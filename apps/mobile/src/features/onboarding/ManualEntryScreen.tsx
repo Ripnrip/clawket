@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
 import { useAppTheme } from '../../theme';
 import { FontSize, FontWeight, Radius, Space } from '../../theme/tokens';
-import { onboardingAnalytics } from './onboardingAnalytics';
+import { analyticsEvents } from '../../services/analytics/events';
 import { hapticLight } from './haptics';
 
 type Props = {
@@ -39,7 +39,7 @@ export function ManualEntryScreen({ onSubmit, onBack }: Props): React.JSX.Elemen
       return;
     }
 
-    onboardingAnalytics.manualSubmitted({
+    analyticsEvents.onboardingManualSubmitted({
       has_url: true,
       has_token: token.trim().length > 0,
     });
