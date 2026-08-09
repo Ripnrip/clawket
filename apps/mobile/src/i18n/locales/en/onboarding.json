@@ -1,0 +1,57 @@
+{
+  "onboarding": {
+    "welcome": {
+      "title": "Welcome to Clawket",
+      "subtitle": "Connect to your AI agent gateway and start chatting",
+      "getStarted": "Get Started",
+      "haveConnection": "I already have a connection"
+    },
+    "connectMethod": {
+      "title": "How would you like to connect?",
+      "subtitle": "Choose your preferred connection method",
+      "qr": {
+        "title": "Scan QR Code",
+        "description": "Scan the QR code from your agent gateway"
+      },
+      "nearby": {
+        "title": "Nearby Discovery",
+        "description": "Find devices nearby",
+        "beta": "Beta"
+      },
+      "manual": {
+        "title": "Manual Entry",
+        "description": "Enter gateway URL and token manually"
+      },
+      "deeplink": {
+        "title": "Invite Link",
+        "description": "Open an invite link from Messages or AirDrop"
+      }
+    },
+    "success": {
+      "title": "You're all set!",
+      "subtitle": "Your agent gateway is connected",
+      "startChatting": "Start Chatting"
+    },
+    "manual": {
+      "title": "Manual Setup",
+      "urlLabel": "Gateway URL",
+      "urlPlaceholder": "https://your-gateway.example.com",
+      "tokenLabel": "Access Token",
+      "tokenPlaceholder": "Enter your token",
+      "connect": "Connect",
+      "errorRequired": "Please enter a gateway URL",
+      "connecting": "Connecting..."
+    },
+    "connecting": {
+      "title": "Connecting...",
+      "subtitle": "Verifying your gateway connection"
+    },
+    "comingSoon": {
+      "title": "Coming Soon",
+      "subtitle": "This feature is not available yet",
+      "goBack": "Go Back"
+    },
+    "back": "Back",
+    "cancel": "Cancel"
+  }
+}

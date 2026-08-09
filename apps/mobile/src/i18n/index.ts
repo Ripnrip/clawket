@@ -6,6 +6,7 @@ import en_common from './locales/en/common.json';
 import en_chat from './locales/en/chat.json';
 import en_config from './locales/en/config.json';
 import en_console from './locales/en/console.json';
+import en_onboarding from './locales/en/onboarding.json';
 
 import zh_common from './locales/zh-Hans/common.json';
 import zh_chat from './locales/zh-Hans/chat.json';
@@ -47,7 +48,7 @@ function resolveLocale(code: string): string {
 i18n.use(initReactI18next).init({
   lng: resolveLocale(deviceLang),
   fallbackLng: 'en',
-  ns: ['common', 'chat', 'config', 'console'],
+  ns: ['common', 'chat', 'config', 'console', 'onboarding'],
   defaultNS: 'common',
   resources: {
     en: {
@@ -55,6 +56,7 @@ i18n.use(initReactI18next).init({
       chat: en_chat,
       config: en_config,
       console: en_console,
+      onboarding: en_onboarding,
     },
     'zh-Hans': {
       common: zh_common,

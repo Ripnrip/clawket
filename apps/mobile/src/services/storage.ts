@@ -176,6 +176,7 @@ const KEYS = {
   youmindAuthPrefix: 'clawket.youmind.auth.v1',
   youmindDeviceId: 'clawket.youmind.deviceId.v1',
   youmindLastBoardPrefix: 'clawket.youmind.lastBoard.v1',
+  onboardingCompleted: 'clawket.onboardingCompleted.v1',
 } as const;
 
 const NODE_INVOKE_AUDIT_KEY = 'clawket.nodeInvokeAudit.v1';
@@ -1626,5 +1627,16 @@ export const StorageService = {
 
   async markPromptPeekShown(): Promise<void> {
     await AsyncStorage.setItem(KEYS.promptPeekShown, '1');
+  },
+
+  // ─── Onboarding ───
+
+  async isOnboardingCompleted(): Promise<boolean> {
+    const raw = await AsyncStorage.getItem(KEYS.onboardingCompleted);
+    return raw === '1';
+  },
+
+  async setOnboardingCompleted(): Promise<void> {
+    await AsyncStorage.setItem(KEYS.onboardingCompleted, '1');
   },
 };

@@ -67,6 +67,7 @@ import { analyticsEvents } from './src/services/analytics/events';
 import { useDeepLinkHandler } from './src/hooks/useDeepLinkHandler';
 import { usePostHogIdentity } from './src/hooks/usePostHogIdentity';
 import { usePostHogScreenTracking } from './src/hooks/usePostHogScreenTracking';
+import { OnboardingNavigator, shouldShowOnboarding } from './src/features/onboarding';
 import { ChatAppearanceSettings, GatewayConfig, SpeechRecognitionLanguage } from './src/types';
 import type { AgentInfo } from './src/types/agent';
 import { buildTheme, builtInAccents, defaultAccentId, useAppTheme } from './src/theme';
@@ -104,6 +105,7 @@ const LOADING_THEME = buildTheme('light', 'light', builtInAccents[defaultAccentI
 export default function App(): React.JSX.Element {
   const [gateway] = useState(() => new GatewayClient());
   const [nodeClient] = useState(() => new NodeClient());
+  const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
   const {
     accentId,
     activeGatewayConfigId,
@@ -140,12 +142,48 @@ export default function App(): React.JSX.Element {
     themeMode,
   } = useAppBootstrap({ gateway, nodeClient });
 
-  if (loading) {
+  useEffect(() => {
+    if (loading) return;
+    void shouldShowOnboarding().then(setShowOnboarding);
+  }, [loading]);
+
+  if (loading || showOnboarding === null) {
     return (
       <View style={[loadingStyles.loading, { backgroundColor: LOADING_THEME.colors.background }]}>
         <ActivityIndicator size="large" color={LOADING_THEME.colors.primary} />
         <StatusBar style="auto" />
       </View>
+    );
+  }
+
+  if (showOnboarding) {
+    return (
+      <AppProviders
+        mode={themeMode}
+        accentId={accentId}
+        customAccent={customAccent}
+        onModeChange={setThemeMode}
+        onAccentChange={setAccentId}
+      >
+        <ProPaywallProvider>
+          <OnboardingNavigator
+            isFirstLaunch={config === null}
+            gateway={gateway}
+            onComplete={(nextConfig: GatewayConfig) => {
+              setConfig(nextConfig);
+              gateway.configure(nextConfig);
+              if (nextConfig.url) {
+                gateway.connect();
+              }
+              setShowOnboarding(false);
+            }}
+            onSkip={() => {
+              void StorageService.setOnboardingCompleted();
+              setShowOnboarding(false);
+            }}
+          />
+        </ProPaywallProvider>
+      </AppProviders>
     );
   }
 
