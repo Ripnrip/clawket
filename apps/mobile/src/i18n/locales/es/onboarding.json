@@ -1,0 +1,57 @@
+{
+  "onboarding": {
+    "welcome": {
+      "title": "Bienvenido a Clawket",
+      "subtitle": "Conéctate a tu puerta de enlace de agente de IA y comienza a chatear",
+      "getStarted": "Comenzar",
+      "haveConnection": "Ya tengo una conexión"
+    },
+    "connectMethod": {
+      "title": "¿Cómo te gustaría conectarte?",
+      "subtitle": "Elige tu método de conexión preferido",
+      "qr": {
+        "title": "Escanear código QR",
+        "description": "Escanea el código QR de tu puerta de enlace del agente"
+      },
+      "nearby": {
+        "title": "Descubrimiento cercano",
+        "description": "Buscar dispositivos cercanos",
+        "beta": "Beta"
+      },
+      "manual": {
+        "title": "Entrada manual",
+        "description": "Introduce la URL del gateway y el token manualmente"
+      },
+      "deeplink": {
+        "title": "Enlace de invitación",
+        "description": "Abrir un enlace de invitación desde Mensajes o AirDrop"
+      }
+    },
+    "success": {
+      "title": "¡Todo listo!",
+      "subtitle": "Tu puerta de enlace del agente está conectada",
+      "startChatting": "Empezar a chatear"
+    },
+    "manual": {
+      "title": "Configuración manual",
+      "urlLabel": "URL del gateway",
+      "urlPlaceholder": "https://your-gateway.example.com",
+      "tokenLabel": "Token de acceso",
+      "tokenPlaceholder": "Introduce tu token",
+      "connect": "Conectar",
+      "errorRequired": "Por favor, introduce una URL de gateway",
+      "connecting": "Conectando..."
+    },
+    "connecting": {
+      "title": "Conectando...",
+      "subtitle": "Verificando tu conexión de gateway"
+    },
+    "comingSoon": {
+      "title": "Próximamente",
+      "subtitle": "Esta función aún no está disponible",
+      "goBack": "Volver"
+    },
+    "back": "Volver",
+    "cancel": "Cancelar"
+  }
+}

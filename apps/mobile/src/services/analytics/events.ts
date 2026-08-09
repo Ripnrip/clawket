@@ -1,6 +1,7 @@
 import { posthogClient } from './posthog';
 import { getAnalyticsSubscriptionProperties } from './subscription-context';
 import { AccentColorId } from '../../types';
+import type { ConnectMethod } from '../../features/onboarding/types';
 
 type AnalyticsValue = boolean | number | string | null | undefined;
 type AnalyticsProperties = Record<string, AnalyticsValue>;
@@ -519,5 +520,42 @@ export const analyticsEvents = {
     source: string;
   }): void {
     captureAnalyticsEvent('lifetime_upgrade_announcement_dismissed', properties);
+  },
+
+  onboardingStarted(properties: { is_first_launch: boolean }): void {
+    captureAnalyticsEvent('onboarding_started', properties);
+  },
+
+  onboardingStepViewed(properties: { step: string }): void {
+    captureAnalyticsEvent('onboarding_step_viewed', properties);
+  },
+
+  onboardingConnectMethodSelected(properties: { method: ConnectMethod; source: string }): void {
+    captureAnalyticsEvent('onboarding_connect_method_selected', properties);
+  },
+
+  onboardingQrScanned(properties: { success: boolean; error_code?: string }): void {
+    captureAnalyticsEvent('onboarding_qr_scanned', properties);
+  },
+
+  onboardingManualSubmitted(properties: { has_url: boolean; has_token: boolean }): void {
+    captureAnalyticsEvent('onboarding_manual_submitted', properties);
+  },
+
+  onboardingConnectionResolved(properties: {
+    method: ConnectMethod;
+    result: 'success' | 'failure';
+    duration_ms: number;
+    error_code?: string;
+  }): void {
+    captureAnalyticsEvent('onboarding_connection_resolved', properties);
+  },
+
+  onboardingCompleted(properties: { method: ConnectMethod; total_duration_ms: number }): void {
+    captureAnalyticsEvent('onboarding_completed', properties);
+  },
+
+  onboardingSkipped(properties: { step: string }): void {
+    captureAnalyticsEvent('onboarding_skipped', properties);
   },
 };
