@@ -17,6 +17,7 @@ import { useAppTheme } from '../../theme';
 import { FontSize, FontWeight, Radius, Space, SpringPreset, TimingPreset } from '../../theme/tokens';
 import { onboardingAnalytics } from './onboardingAnalytics';
 import { hapticLight } from './haptics';
+import { LottieAnimationView } from './LottieView';
 
 type Props = {
   isFirstLaunch: boolean;
@@ -109,22 +110,7 @@ export function WelcomeScreen({ isFirstLaunch, onGetStarted, onSkip }: Props): R
       {/* Logo / animation area */}
       <View style={styles.logoArea}>
         <View style={styles.logoContainer}>
-          {/* TODO: Replace with Lottie animation when assets are ready */}
-          <Animated.View
-            style={[
-              {
-                width: 120,
-                height: 120,
-                borderRadius: 60,
-                backgroundColor: colors.primarySoft,
-                alignItems: 'center',
-                justifyContent: 'center',
-              },
-              pulseStyle,
-            ]}
-          >
-            <MessageCircle size={48} color={colors.primary} strokeWidth={1.5} />
-          </Animated.View>
+          <LottieAnimationView animationKey="welcome" width={140} height={140} />
         </View>
       </View>
 

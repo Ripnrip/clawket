@@ -12,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useAppTheme } from '../../theme';
 import { FontSize, FontWeight, Space, TimingPreset } from '../../theme/tokens';
+import { LottieAnimationView } from './LottieView';
 
 type Props = {
   error?: { message: string } | null;
@@ -53,7 +54,7 @@ export function ConnectingScreen({ error }: Props): React.JSX.Element {
           </>
         ) : (
           <>
-            <ActivityIndicator size="large" color={colors.primary} />
+            <LottieAnimationView animationKey="connecting" width={120} height={120} />
             <Text style={[styles.title, { color: colors.text }]}>
               {t('onboarding.connecting.title')}
             </Text>

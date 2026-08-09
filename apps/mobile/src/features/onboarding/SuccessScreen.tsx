@@ -18,6 +18,7 @@ import type { GatewayConfig } from '../../types';
 import type { ConnectMethod, OnboardingComplete } from './types';
 import { onboardingAnalytics } from './onboardingAnalytics';
 import { hapticSuccess } from './haptics';
+import { LottieAnimationView } from './LottieView';
 
 type Props = {
   config: GatewayConfig;
@@ -119,17 +120,7 @@ export function SuccessScreen({ config, method, startedAt, onComplete }: Props):
     >
       {/* Animated success illustration */}
       <View style={styles.illustrationArea}>
-        <Animated.View
-          style={[
-            styles.successCircle,
-            { backgroundColor: colors.success },
-            circleStyle,
-          ]}
-        >
-          <Animated.View style={checkStyle}>
-            <Check size={48} color="#FFFFFF" strokeWidth={3} />
-          </Animated.View>
-        </Animated.View>
+        <LottieAnimationView animationKey="success" width={160} height={160} />
       </View>
 
       {/* Text content */}

@@ -32,3 +32,7 @@ export type {
   OnboardingSkip,
   ConnectionResult,
 } from './types';
+
+export { LottieAnimationView } from './LottieView';
+export { lottieAnimations } from './lottieAssets';
+export type { LottieAnimationKey } from './lottieAssets';
