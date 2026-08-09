@@ -17,6 +17,8 @@ export type ConnectStartIdentity = {
 export type ConnectHandshakeMeta = {
   id: string | null;
   method: 'connect' | 'connect.start';
+  minProtocol: number | null;
+  maxProtocol: number | null;
   noncePresent: boolean;
   nonceLength: number | null;
   authFields: string[];
@@ -39,6 +41,8 @@ export type ResponseEnvelopeMeta = {
   ok: boolean;
   errorCode: string | null;
   errorMessage: string | null;
+  errorDetails: Record<string, unknown> | null;
+  retryAfterMs: number | null;
 };
 
 export function parseControl(text: string): RelayControl | null {
@@ -114,6 +118,8 @@ export function parseConnectHandshakeMeta(text: string): ConnectHandshakeMeta | 
       method?: unknown;
       id?: unknown;
       params?: {
+        minProtocol?: unknown;
+        maxProtocol?: unknown;
         auth?: Record<string, unknown>;
         device?: {
           nonce?: unknown;
@@ -127,6 +133,8 @@ export function parseConnectHandshakeMeta(text: string): ConnectHandshakeMeta | 
     return {
       id: typeof parsed.id === 'string' && parsed.id.trim() ? parsed.id.trim() : null,
       method: parsed.method,
+      minProtocol: readProtocolVersion(parsed.params?.minProtocol),
+      maxProtocol: readProtocolVersion(parsed.params?.maxProtocol),
       noncePresent: typeof nonce === 'string' && nonce.length > 0,
       nonceLength: typeof nonce === 'string' ? nonce.length : null,
       authFields: auth && typeof auth === 'object'
@@ -208,6 +216,8 @@ export function parseResponseEnvelopeMeta(text: string): ResponseEnvelopeMeta | 
       error?: {
         code?: unknown;
         message?: unknown;
+        details?: unknown;
+        retryAfterMs?: unknown;
       };
     };
     if (parsed.type !== 'res') return null;
@@ -221,10 +231,25 @@ export function parseResponseEnvelopeMeta(text: string): ResponseEnvelopeMeta | 
       errorMessage: typeof parsed.error?.message === 'string' && parsed.error.message.trim()
         ? parsed.error.message.trim()
         : null,
+      errorDetails: isRecord(parsed.error?.details) ? parsed.error.details : null,
+      retryAfterMs: readRetryAfterMs(parsed.error?.retryAfterMs, parsed.error?.details),
     };
   } catch {
     return null;
   }
+}
+
+function readRetryAfterMs(value: unknown, details: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value) && value >= 0) {
+    return value;
+  }
+  if (isRecord(details)) {
+    const detailsValue = details.retryAfterMs;
+    if (typeof detailsValue === 'number' && Number.isFinite(detailsValue) && detailsValue >= 0) {
+      return detailsValue;
+    }
+  }
+  return null;
 }
 
 function firstString(...values: unknown[]): string {
@@ -240,6 +265,12 @@ function firstNullableString(value: unknown): string | null {
 
 function readOptionalString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
+
+function readProtocolVersion(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 1
+    ? Math.trunc(value)
+    : null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

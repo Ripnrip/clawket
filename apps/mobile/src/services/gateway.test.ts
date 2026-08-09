@@ -1,4 +1,5 @@
 import { extractText, GatewayClient } from './gateway';
+import { GatewayRequestError } from './gateway-shared';
 import type { ConnectChallengePayload } from '../types';
 import { RELAY_CONTROL_PREFIX } from './gateway-relay';
 
@@ -1180,6 +1181,8 @@ describe('GatewayClient', () => {
       expect(createdWs.send).toHaveBeenCalledTimes(1);
       const connectFrame = JSON.parse(createdWs.send.mock.calls[0][0] as string);
       expect(connectFrame.method).toBe('connect');
+      expect(connectFrame.params.minProtocol).toBe(3);
+      expect(connectFrame.params.maxProtocol).toBe(4);
       expect(connectFrame.params.auth).toEqual({ deviceToken: 'stored-device-token' });
       expect(createdWs.send.mock.calls[0][0]).not.toContain(RELAY_CONTROL_PREFIX);
       expect(decodeLatestSignedPayload()).toContain(`|stored-device-token|${'b'.repeat(64)}|`);
@@ -1343,6 +1346,59 @@ describe('GatewayClient', () => {
           skipAutoReconnectOnTimeout: true,
         }),
       );
+      expect(StorageService.setDeviceToken).toHaveBeenCalledWith('a'.repeat(64), 'issued-device-token', {
+        serverUrl: 'https://registry.example.com',
+        gatewayId: 'gateway-device-relay',
+      });
+    });
+
+    it('retries connect when OpenClaw reports startup sidecars are still loading', async () => {
+      const { StorageService } = jest.requireMock('./storage') as {
+        StorageService: { getDeviceToken: jest.Mock; setDeviceToken: jest.Mock };
+      };
+      StorageService.getDeviceToken.mockResolvedValue('stored-device-token');
+      mockDeviceIdentity();
+
+      client.configure({
+        url: 'wss://relay-us.example.com/ws',
+        mode: 'relay',
+        relay: {
+          serverUrl: 'https://registry.example.com/',
+          gatewayId: 'gateway-device-relay',
+          clientToken: 'relay-access-token',
+          supportsBootstrap: true,
+        },
+      });
+
+      client.connect();
+      await flushPromises();
+      createdWs.readyState = MockWebSocket.OPEN;
+      createdWs.onopen!();
+
+      const sendRequestSpy = jest
+        .spyOn(client as unknown as { sendRequest: (method: string, params?: object, options?: object) => Promise<unknown> }, 'sendRequest')
+        .mockRejectedValueOnce(new GatewayRequestError({
+          code: 'UNAVAILABLE',
+          message: 'gateway startup sidecars are still loading',
+          details: { reason: 'startup-sidecars' },
+          retryable: true,
+          retryAfterMs: 500,
+        }))
+        .mockResolvedValueOnce({
+          auth: { deviceToken: 'issued-device-token' },
+        });
+
+      const challengePromise = (client as unknown as { handleConnectChallenge: (payload: ConnectChallengePayload) => Promise<void> })
+        .handleConnectChallenge({ nonce: 'b'.repeat(64), ts: Date.now() });
+
+      await flushPromises();
+      expect(sendRequestSpy).toHaveBeenCalledTimes(1);
+
+      jest.advanceTimersByTime(500);
+      await challengePromise;
+
+      expect(sendRequestSpy).toHaveBeenCalledTimes(2);
+      expect(client.getConnectionState()).toBe('ready');
       expect(StorageService.setDeviceToken).toHaveBeenCalledWith('a'.repeat(64), 'issued-device-token', {
         serverUrl: 'https://registry.example.com',
         gatewayId: 'gateway-device-relay',

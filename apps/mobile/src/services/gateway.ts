@@ -51,6 +51,7 @@ import {
   CHALLENGE_TIMEOUT_MS,
   CONNECT_REQUEST_TIMEOUT_MS,
   FORCE_RECONNECT_DEBOUNCE_MS,
+  MIN_PROTOCOL_VERSION,
   PAIRING_WAIT_TIMEOUT_MS,
   PROTOCOL_VERSION,
   RECONNECT_BASE_MS,
@@ -69,6 +70,7 @@ import {
   type SessionsListResult,
   type TimedValue,
   extractText,
+  GatewayRequestError,
   handleGatewayRawMessage,
   isBootstrapTokenUnsupportedError,
   isDeviceSignatureInvalidError,
@@ -128,6 +130,10 @@ export class GatewayClient {
   private static readonly RECONNECT_READY_TIMEOUT_MS = 6_000;
   private static readonly HISTORY_CACHE_TTL_MS = 1_000;
   private static readonly HERMES_BRIDGE_UNAVAILABLE_RETRY_DELAYS_MS = [750, 750];
+  private static readonly STARTUP_SIDECARS_CONNECT_RETRY_MAX_ATTEMPTS = 4;
+  private static readonly STARTUP_SIDECARS_CONNECT_RETRY_DEFAULT_DELAY_MS = 750;
+  private static readonly STARTUP_SIDECARS_CONNECT_RETRY_MIN_DELAY_MS = 250;
+  private static readonly STARTUP_SIDECARS_CONNECT_RETRY_MAX_DELAY_MS = 3_000;
   // Idempotent reads only. Mutating calls (chat.send, chat.abort, etc.) must
   // never be auto-retried because the bridge may have already accepted the
   // first attempt and a retry would duplicate the side effect.
@@ -1445,7 +1451,7 @@ export class GatewayClient {
     const signatureB64 = bytesToBase64Url(signatureBytes);
 
     const connectParams = {
-      minProtocol: PROTOCOL_VERSION,
+      minProtocol: MIN_PROTOCOL_VERSION,
       maxProtocol: PROTOCOL_VERSION,
       client: {
         id: clientId,
@@ -1470,15 +1476,7 @@ export class GatewayClient {
     };
 
     try {
-      this.logTelemetry('connect_req_sent', {
-        attemptId,
-        route: this.activeRoute,
-        elapsedMs: Date.now() - this.connectStartedAt,
-      });
-      const result = await this.sendRequest('connect', connectParams, {
-        timeoutMs: CONNECT_REQUEST_TIMEOUT_MS,
-        skipAutoReconnectOnTimeout: true,
-      });
+      const result = await this.sendConnectRequestWithStartupRetry(attemptId, connectParams);
       if (!this.isActiveConnectAttempt(attemptId)) return;
       // Save device token and extract gateway info from hello-ok
       const helloOk = result as {
@@ -1630,6 +1628,82 @@ export class GatewayClient {
       this.emit('error', { code: 'auth_failed', message: msg });
       this.ws?.close();
     }
+  }
+
+  private async sendConnectRequestWithStartupRetry(
+    attemptId: number,
+    connectParams: object,
+  ): Promise<unknown> {
+    let startupRetryCount = 0;
+    for (;;) {
+      this.logTelemetry('connect_req_sent', {
+        attemptId,
+        route: this.activeRoute,
+        elapsedMs: Date.now() - this.connectStartedAt,
+        startupRetryCount,
+      });
+      try {
+        return await this.sendRequest('connect', connectParams, {
+          timeoutMs: CONNECT_REQUEST_TIMEOUT_MS,
+          skipAutoReconnectOnTimeout: true,
+        });
+      } catch (error: unknown) {
+        const retryDelayMs = this.getStartupSidecarsRetryDelayMs(error);
+        if (retryDelayMs == null) throw error;
+        if (startupRetryCount >= GatewayClient.STARTUP_SIDECARS_CONNECT_RETRY_MAX_ATTEMPTS) throw error;
+        if (!this.isActiveConnectAttempt(attemptId)) return null;
+
+        const elapsedMs = Date.now() - this.connectStartedAt;
+        const remainingBudgetMs = CHALLENGE_TIMEOUT_MS - elapsedMs;
+        if (remainingBudgetMs <= GatewayClient.STARTUP_SIDECARS_CONNECT_RETRY_MIN_DELAY_MS) throw error;
+
+        const delayMs = Math.min(
+          retryDelayMs,
+          remainingBudgetMs - GatewayClient.STARTUP_SIDECARS_CONNECT_RETRY_MIN_DELAY_MS,
+        );
+        if (delayMs < GatewayClient.STARTUP_SIDECARS_CONNECT_RETRY_MIN_DELAY_MS) throw error;
+
+        startupRetryCount += 1;
+        this.logTelemetry('connect_startup_sidecars_retry', {
+          attemptId,
+          route: this.activeRoute,
+          elapsedMs,
+          retryAfterMs: delayMs,
+          startupRetryCount,
+        });
+        await this.delay(delayMs);
+        if (!this.isActiveConnectAttempt(attemptId)) return null;
+      }
+    }
+  }
+
+  private getStartupSidecarsRetryDelayMs(error: unknown): number | null {
+    if (!isStartupSidecarsUnavailableError(error)) return null;
+    const retryAfterMs = error instanceof GatewayRequestError
+      ? error.retryAfterMs ?? this.readRetryAfterMs(error.details)
+      : null;
+    return this.clampStartupSidecarsRetryDelayMs(
+      retryAfterMs ?? GatewayClient.STARTUP_SIDECARS_CONNECT_RETRY_DEFAULT_DELAY_MS,
+    );
+  }
+
+  private readRetryAfterMs(details: unknown): number | null {
+    if (!details || typeof details !== 'object') return null;
+    const value = (details as { retryAfterMs?: unknown }).retryAfterMs;
+    return typeof value === 'number' && Number.isFinite(value) ? value : null;
+  }
+
+  private clampStartupSidecarsRetryDelayMs(value: number): number {
+    return Math.max(
+      GatewayClient.STARTUP_SIDECARS_CONNECT_RETRY_MIN_DELAY_MS,
+      Math.min(value, GatewayClient.STARTUP_SIDECARS_CONNECT_RETRY_MAX_DELAY_MS),
+    );
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    });
   }
 
   // ---- Private: request/response ----
@@ -2768,4 +2842,18 @@ export class GatewayClient {
       hint: 'If you are connecting over your local network, set gateway.tls.enabled to false before pairing.',
     };
   }
+}
+
+function isStartupSidecarsUnavailableError(error: unknown): boolean {
+  if (error instanceof GatewayRequestError) {
+    if (error.code !== 'UNAVAILABLE') return false;
+    const details = error.details;
+    if (details && typeof details === 'object') {
+      const reason = (details as { reason?: unknown }).reason;
+      if (reason === 'startup-sidecars') return true;
+    }
+  }
+
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes('[UNAVAILABLE]') && message.includes('startup-sidecars');
 }

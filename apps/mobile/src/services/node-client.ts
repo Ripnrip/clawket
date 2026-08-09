@@ -17,8 +17,9 @@ import {
 import { APP_PACKAGE_VERSION } from '../constants/app-version';
 import { getRuntimeClientId, getRuntimeDeviceFamily, getRuntimePlatform } from '../utils/platform';
 
-// Protocol version must match gateway expectation
-const PROTOCOL_VERSION = 3;
+// Advertise the protocol range Clawket can speak across OpenClaw 4.x and 5.x.
+const MIN_PROTOCOL_VERSION = 3;
+const PROTOCOL_VERSION = 4;
 
 // Reconnect config
 const RECONNECT_BASE_MS = 800;
@@ -260,7 +261,7 @@ export class NodeClient {
     const signatureB64 = bytesToBase64Url(signatureBytes);
 
     const connectParams = {
-      minProtocol: PROTOCOL_VERSION,
+      minProtocol: MIN_PROTOCOL_VERSION,
       maxProtocol: PROTOCOL_VERSION,
       client: {
         id: clientId,

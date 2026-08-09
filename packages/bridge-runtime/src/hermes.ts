@@ -1223,6 +1223,17 @@ export class HermesLocalBridge {
       return this.handleFastCommand(sessionKey, text, idempotencyKey || undefined);
     }
 
+    // Build multimodal input when image attachments are present.
+    // The Hermes /v1/runs endpoint accepts OpenAI-style content arrays
+    // with image_url parts (data: URLs or http(s) URLs).
+    const attachments = Array.isArray(payload.attachments) ? payload.attachments : [];
+    const imageAttachments = attachments.filter(
+      (att: Record<string, unknown>) =>
+        typeof att === 'object' && att !== null &&
+        typeof att.mimeType === 'string' && att.mimeType.startsWith('image/') &&
+        typeof att.content === 'string' && att.content.length > 0,
+    );
+
     const session = this.sessionStore.ensureSession(sessionKey);
     this.sessionStore.appendMessage(sessionKey, {
       role: 'user',
@@ -1232,11 +1243,28 @@ export class HermesLocalBridge {
     });
     this.updateSnapshot({ sessionCount: this.sessionStore.count() });
 
+    // When images are present, send input as a content-parts array so the
+    // Hermes API server treats it as multimodal.  Otherwise keep the plain
+    // string for backward compatibility and smaller payloads.
+    let input: string | Array<Record<string, unknown>>;
+    if (imageAttachments.length > 0) {
+      const parts: Array<Record<string, unknown>> = [{ type: 'text', text }];
+      for (const att of imageAttachments) {
+        parts.push({
+          type: 'image_url',
+          image_url: { url: `data:${att.mimeType};base64,${att.content}` },
+        });
+      }
+      input = parts;
+    } else {
+      input = text;
+    }
+
     const startResponse = await fetch(`${this.apiBaseUrl}/v1/runs`, {
       method: 'POST',
       headers: buildHermesApiHeaders(this.apiKey),
       body: JSON.stringify({
-        input: text,
+        input,
         conversation_history: session.messages.map((message) => ({
           role: message.role,
           content: message.content,

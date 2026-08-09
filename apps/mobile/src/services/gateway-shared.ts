@@ -9,7 +9,8 @@ import type {
   NodeInvokeRequest,
 } from '../types/canvas';
 
-export const PROTOCOL_VERSION = 3;
+export const MIN_PROTOCOL_VERSION = 3;
+export const PROTOCOL_VERSION = 4;
 
 export const RECONNECT_BASE_MS = 800;
 export const RECONNECT_MAX_MS = 15_000;
@@ -96,6 +97,28 @@ export type PendingRequest = {
   reject: (err: Error) => void;
   timeout: ReturnType<typeof setTimeout>;
 };
+
+export class GatewayRequestError extends Error {
+  readonly code: string;
+  readonly details?: unknown;
+  readonly retryable?: boolean;
+  readonly retryAfterMs?: number;
+
+  constructor(input: {
+    code: string;
+    message: string;
+    details?: unknown;
+    retryable?: boolean;
+    retryAfterMs?: number;
+  }) {
+    super(`[${input.code}] ${input.message}`);
+    this.name = 'GatewayRequestError';
+    this.code = input.code;
+    this.details = input.details;
+    this.retryable = input.retryable;
+    this.retryAfterMs = input.retryAfterMs;
+  }
+}
 
 export type TimedValue<T> = {
   value: T;
@@ -277,7 +300,18 @@ export function handleGatewayRawMessage(context: GatewayMessageContext, rawData:
   }
 }
 
-function handleGatewayResponse(context: GatewayMessageContext, frame: { id: string; ok: boolean; payload?: unknown; error?: { message?: string; code?: string } }): void {
+function handleGatewayResponse(context: GatewayMessageContext, frame: {
+  id: string;
+  ok: boolean;
+  payload?: unknown;
+  error?: {
+    message?: string;
+    code?: string;
+    details?: unknown;
+    retryable?: boolean;
+    retryAfterMs?: number;
+  };
+}): void {
   const pending = context.pendingRequests.get(frame.id);
   if (!pending) return;
   context.pendingRequests.delete(frame.id);
@@ -306,7 +340,13 @@ function handleGatewayResponse(context: GatewayMessageContext, frame: { id: stri
 
   const errMsg = frame.error?.message ?? 'Request failed';
   const errCode = frame.error?.code ?? 'unknown';
-  pending.reject(new Error(`[${errCode}] ${errMsg}`));
+  pending.reject(new GatewayRequestError({
+    code: errCode,
+    message: errMsg,
+    details: frame.error?.details,
+    retryable: frame.error?.retryable,
+    retryAfterMs: frame.error?.retryAfterMs,
+  }));
 }
 
 function handleGatewayEvent(context: GatewayMessageContext, frame: GatewayEventFrame): void {

@@ -13,6 +13,8 @@ import {
   buildRelayWsUrl,
   dedupePendingGatewayMessages,
   patchConnectRequestGatewayAuth,
+  patchConnectRequestGatewayProtocolRange,
+  patchOpenClawConnectRequest,
   prunePendingGatewayMessagesForFreshDemand,
   sanitizeRuntimeLogLine,
   shouldRecycleGatewayForFreshClient,
@@ -251,6 +253,8 @@ describe('bridge runtime protocol helpers', () => {
     }))).toEqual({
       id: 'req_1',
       method: 'connect.start',
+      minProtocol: null,
+      maxProtocol: null,
       noncePresent: true,
       nonceLength: 9,
       authFields: ['token'],
@@ -308,12 +312,16 @@ describe('bridge runtime protocol helpers', () => {
       error: {
         code: 'TIMEOUT',
         message: 'upstream timeout',
+        details: { reason: 'slow' },
+        retryAfterMs: 250,
       },
     }))).toEqual({
       id: 'req_1',
       ok: false,
       errorCode: 'TIMEOUT',
       errorMessage: 'upstream timeout',
+      errorDetails: { reason: 'slow' },
+      retryAfterMs: 250,
     });
   });
 
@@ -458,6 +466,73 @@ describe('bridge runtime protocol helpers', () => {
     });
   });
 
+  it('widens legacy OpenClaw connect protocol range for newer gateways', () => {
+    const patched = patchConnectRequestGatewayProtocolRange(JSON.stringify({
+      type: 'req',
+      id: 'req_1',
+      method: 'connect',
+      params: {
+        minProtocol: 3,
+        maxProtocol: 3,
+        auth: { bootstrapToken: 'bootstrap' },
+        device: { nonce: 'nonce-1' },
+      },
+    }));
+
+    expect(patched.patched).toBe(true);
+    expect(JSON.parse(patched.text)).toMatchObject({
+      params: {
+        minProtocol: 3,
+        maxProtocol: 4,
+      },
+    });
+  });
+
+  it('does not rewrite unknown future OpenClaw connect protocol ranges', () => {
+    const original = JSON.stringify({
+      type: 'req',
+      id: 'req_1',
+      method: 'connect',
+      params: {
+        minProtocol: 5,
+        maxProtocol: 5,
+      },
+    });
+
+    expect(patchConnectRequestGatewayProtocolRange(original)).toEqual({
+      text: original,
+      patched: false,
+    });
+  });
+
+  it('patches OpenClaw connect auth and protocol range together', () => {
+    const patched = patchOpenClawConnectRequest(JSON.stringify({
+      type: 'req',
+      id: 'req_1',
+      method: 'connect',
+      params: {
+        minProtocol: 3,
+        maxProtocol: 3,
+        auth: {},
+      },
+    }), {
+      authMode: 'password',
+      password: 'p697',
+    });
+
+    expect(patched.authInjected).toBe(true);
+    expect(patched.protocolPatched).toBe(true);
+    expect(JSON.parse(patched.text)).toMatchObject({
+      params: {
+        minProtocol: 3,
+        maxProtocol: 4,
+        auth: {
+          password: 'p697',
+        },
+      },
+    });
+  });
+
   it('preserves existing gateway password on proxied connect requests', () => {
     const original = JSON.stringify({
       type: 'req',
@@ -561,6 +636,76 @@ describe('bridge runtime protocol helpers', () => {
     });
 
     await runtime.stop();
+  });
+
+  it('retries proxied connect responses while OpenClaw startup sidecars are loading', async () => {
+    vi.useFakeTimers();
+    const sockets: FakeSocket[] = [];
+    const runtime = new BridgeRuntime({
+      config: BASE_CONFIG,
+      gatewayUrl: 'ws://127.0.0.1:18789',
+      createWebSocket: (url) => {
+        const socket = new FakeSocket(url);
+        sockets.push(socket);
+        return socket;
+      },
+    });
+
+    runtime.start();
+    const relay = sockets[0];
+    relay.open();
+
+    relay.message(JSON.stringify({
+      type: 'req',
+      id: 'connect-a',
+      method: 'connect',
+      params: {
+        auth: { token: 'secret' },
+        device: { nonce: 'nonce-a' },
+      },
+    }));
+
+    const gateway = sockets[1];
+    gateway.open();
+    expect(gateway.sent).toHaveLength(1);
+    const relaySentBefore = relay.sent.length;
+
+    gateway.message(JSON.stringify({
+      type: 'res',
+      id: 'connect-a',
+      ok: false,
+      error: {
+        code: 'UNAVAILABLE',
+        message: 'gateway startup sidecars are still loading',
+        details: { reason: 'startup-sidecars' },
+        retryAfterMs: 250,
+      },
+    }));
+
+    expect(relay.sent).toHaveLength(relaySentBefore);
+
+    await vi.advanceTimersByTimeAsync(250);
+    expect(gateway.sent).toHaveLength(2);
+    expect(JSON.parse(gateway.sent[1] as string)).toMatchObject({
+      id: 'connect-a',
+      method: 'connect',
+    });
+
+    gateway.message(JSON.stringify({
+      type: 'res',
+      id: 'connect-a',
+      ok: true,
+      payload: { type: 'hello-ok' },
+    }));
+
+    expect(relay.sent).toHaveLength(relaySentBefore + 1);
+    expect(JSON.parse(relay.sent.at(-1) as string)).toMatchObject({
+      id: 'connect-a',
+      ok: true,
+    });
+
+    await runtime.stop();
+    vi.useRealTimers();
   });
 
   it('does not connect the local gateway when relay demand drops to zero and no connect work is queued', async () => {

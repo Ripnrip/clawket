@@ -37,6 +37,8 @@ type InFlightConnectHandshake = {
   method: 'connect' | 'connect.start';
   startedAtMs: number;
   slowWarningLogged: boolean;
+  text: string;
+  startupRetryCount: number;
 };
 
 export type ConnectedDevice = {
@@ -98,6 +100,12 @@ const CONNECT_HANDSHAKE_WARN_DELAY_MS = 8_000;
 const MAX_PENDING_GATEWAY_MESSAGES = 256;
 const MAX_DEVICE_DETAILS = 32;
 const MAX_PENDING_PAIR_REQUESTS = 16;
+const OPENCLAW_GATEWAY_MIN_PROTOCOL_VERSION = 3;
+const OPENCLAW_GATEWAY_MAX_PROTOCOL_VERSION = 4;
+const STARTUP_SIDECARS_CONNECT_RETRY_MAX_ATTEMPTS = 4;
+const STARTUP_SIDECARS_CONNECT_RETRY_DEFAULT_DELAY_MS = 750;
+const STARTUP_SIDECARS_CONNECT_RETRY_MIN_DELAY_MS = 250;
+const STARTUP_SIDECARS_CONNECT_RETRY_MAX_DELAY_MS = 3_000;
 
 export class BridgeRuntime {
   private relaySocket: RuntimeSocket | null = null;
@@ -673,6 +681,9 @@ export class BridgeRuntime {
     }
     const response = parseResponseEnvelopeMeta(text);
     if (response) {
+      if (this.scheduleStartupSidecarsConnectRetry(response)) {
+        return;
+      }
       this.observeGatewayResponse(response);
     }
     relay.send(text);
@@ -707,7 +718,7 @@ export class BridgeRuntime {
       return;
     }
     if (message.kind === 'text') {
-      const patched = patchConnectRequestGatewayAuth(message.text, readOpenClawInfo());
+      const patched = patchOpenClawConnectRequest(message.text, readOpenClawInfo());
       const meta = parseConnectHandshakeMeta(patched.text);
       if (meta) {
         if (meta.id) {
@@ -715,12 +726,19 @@ export class BridgeRuntime {
             method: meta.method,
             startedAtMs: Date.now(),
             slowWarningLogged: false,
+            text: patched.text,
+            startupRetryCount: 0,
           });
         }
         this.log(`gateway connect request forwarded${formatConnectHandshakeMetaForLog(meta)}`);
       }
-      if (patched.injected) {
+      if (patched.authInjected) {
         this.log('gateway connect auth patched mode=password');
+      }
+      if (patched.protocolPatched) {
+        this.log(
+          `gateway connect protocol patched min=${OPENCLAW_GATEWAY_MIN_PROTOCOL_VERSION} max=${OPENCLAW_GATEWAY_MAX_PROTOCOL_VERSION}`,
+        );
       }
       gateway.send(patched.text);
       return;
@@ -826,6 +844,47 @@ export class BridgeRuntime {
       wsOptions.checkServerIdentity = mergedOptions.checkServerIdentity as never;
     }
     return new WebSocket(url, wsOptions);
+  }
+
+  private scheduleStartupSidecarsConnectRetry(response: {
+    id: string;
+    ok: boolean;
+    errorCode: string | null;
+    errorMessage: string | null;
+    errorDetails: Record<string, unknown> | null;
+    retryAfterMs: number | null;
+  }): boolean {
+    if (!isStartupSidecarsUnavailableResponse(response)) return false;
+    const pending = this.inFlightConnectHandshakes.get(response.id);
+    if (!pending) return false;
+    if (pending.startupRetryCount >= STARTUP_SIDECARS_CONNECT_RETRY_MAX_ATTEMPTS) return false;
+
+    const gateway = this.gatewaySocket;
+    if (!gateway || gateway.readyState !== WebSocket.OPEN) return false;
+
+    pending.startupRetryCount += 1;
+    const delayMs = clampStartupSidecarsRetryDelayMs(
+      response.retryAfterMs ?? STARTUP_SIDECARS_CONNECT_RETRY_DEFAULT_DELAY_MS,
+    );
+    this.log(
+      `gateway connect startup-sidecars retry scheduled reqId=<redacted> ` +
+      `delayMs=${delayMs} attempt=${pending.startupRetryCount}`,
+    );
+    setTimeout(() => {
+      if (this.stopped) return;
+      const current = this.inFlightConnectHandshakes.get(response.id);
+      if (current !== pending) return;
+      const activeGateway = this.gatewaySocket;
+      if (!activeGateway || activeGateway.readyState !== WebSocket.OPEN) return;
+      current.startedAtMs = Date.now();
+      current.slowWarningLogged = false;
+      activeGateway.send(current.text);
+      this.log(
+        `gateway connect startup-sidecars retry sent reqId=<redacted> ` +
+        `attempt=${current.startupRetryCount}`,
+      );
+    }, delayMs);
+    return true;
   }
 
   private observeGatewayResponse(response: { id: string; ok: boolean; errorCode: string | null; errorMessage: string | null }): void {
@@ -1175,6 +1234,64 @@ export function patchConnectRequestGatewayAuth(
   }
 }
 
+export function patchOpenClawConnectRequest(
+  text: string,
+  openClawInfo: Pick<OpenClawInfo, 'authMode' | 'password'>,
+): { text: string; authInjected: boolean; protocolPatched: boolean } {
+  const authPatched = patchConnectRequestGatewayAuth(text, openClawInfo);
+  const protocolPatched = patchConnectRequestGatewayProtocolRange(authPatched.text);
+  return {
+    text: protocolPatched.text,
+    authInjected: authPatched.injected,
+    protocolPatched: protocolPatched.patched,
+  };
+}
+
+export function patchConnectRequestGatewayProtocolRange(
+  text: string,
+): { text: string; patched: boolean } {
+  try {
+    const parsed = JSON.parse(text) as {
+      type?: unknown;
+      method?: unknown;
+      params?: Record<string, unknown>;
+    };
+    if (parsed.type !== 'req' || (parsed.method !== 'connect' && parsed.method !== 'connect.start')) {
+      return { text, patched: false };
+    }
+
+    const params = parsed.params && typeof parsed.params === 'object' ? { ...parsed.params } : {};
+    const minProtocol = readGatewayProtocolVersion(params.minProtocol);
+    const maxProtocol = readGatewayProtocolVersion(params.maxProtocol);
+    if ((minProtocol != null && minProtocol > OPENCLAW_GATEWAY_MAX_PROTOCOL_VERSION)
+      || (maxProtocol != null && maxProtocol > OPENCLAW_GATEWAY_MAX_PROTOCOL_VERSION)) {
+      return { text, patched: false };
+    }
+    if (minProtocol === OPENCLAW_GATEWAY_MIN_PROTOCOL_VERSION
+      && maxProtocol === OPENCLAW_GATEWAY_MAX_PROTOCOL_VERSION) {
+      return { text, patched: false };
+    }
+
+    params.minProtocol = OPENCLAW_GATEWAY_MIN_PROTOCOL_VERSION;
+    params.maxProtocol = OPENCLAW_GATEWAY_MAX_PROTOCOL_VERSION;
+    return {
+      text: JSON.stringify({
+        ...parsed,
+        params,
+      }),
+      patched: true,
+    };
+  } catch {
+    return { text, patched: false };
+  }
+}
+
+function readGatewayProtocolVersion(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 1
+    ? Math.trunc(value)
+    : null;
+}
+
 function buildLocalGatewayTlsConnectOptions(url: string): Pick<
   RuntimeSocketConnectOptions,
   'rejectUnauthorized' | 'checkServerIdentity'
@@ -1228,6 +1345,8 @@ function normalizeFingerprint(input: string): string | null {
 function formatConnectHandshakeMetaForLog(meta: {
   id: string | null;
   method: 'connect' | 'connect.start';
+  minProtocol: number | null;
+  maxProtocol: number | null;
   noncePresent: boolean;
   nonceLength: number | null;
   authFields: string[];
@@ -1236,6 +1355,8 @@ function formatConnectHandshakeMetaForLog(meta: {
   return (
     ` method=${meta.method}` +
     ` reqId=${meta.id ? '<redacted>' : '<none>'}` +
+    ` minProtocol=${meta.minProtocol ?? '<none>'}` +
+    ` maxProtocol=${meta.maxProtocol ?? '<none>'}` +
     ` noncePresent=${meta.noncePresent}` +
     ` nonceLength=${meta.nonceLength ?? 0}` +
     ` authFields=${meta.authFields.length > 0 ? meta.authFields.join(',') : '<none>'}`
@@ -1365,6 +1486,24 @@ function stripSensitiveSearchParams(parsed: URL): void {
   for (const key of sensitiveKeys) {
     parsed.searchParams.delete(key);
   }
+}
+
+function isStartupSidecarsUnavailableResponse(response: {
+  ok: boolean;
+  errorCode: string | null;
+  errorMessage: string | null;
+  errorDetails: Record<string, unknown> | null;
+}): boolean {
+  if (response.ok || response.errorCode !== 'UNAVAILABLE') return false;
+  if (response.errorDetails?.reason === 'startup-sidecars') return true;
+  return response.errorMessage?.includes('startup-sidecars') === true;
+}
+
+function clampStartupSidecarsRetryDelayMs(value: number): number {
+  return Math.max(
+    STARTUP_SIDECARS_CONNECT_RETRY_MIN_DELAY_MS,
+    Math.min(value, STARTUP_SIDECARS_CONNECT_RETRY_MAX_DELAY_MS),
+  );
 }
 
 function normalizeText(data: RawData): string | null {
