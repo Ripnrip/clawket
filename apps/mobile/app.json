@@ -20,6 +20,10 @@
         "NSPhotoLibraryAddUsageDescription": "Allow Clawket to save stats posters to your photo library.",
         "NSSpeechRecognitionUsageDescription": "Allow Clawket to transcribe your speech into chat messages.",
         "ITSAppUsesNonExemptEncryption": false,
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true,
+          "NSAllowsArbitraryLoads": true
+        },
         "CFBundleAllowMixedLocalizations": true,
         "CFBundleLocalizations": [
           "en",
