@@ -1,68 +1,99 @@
 /**
  * Curated Lottie animation URLs for the onboarding flow.
  *
- * These are free-to-use animations from LottieFiles (CC0 / Free).
- * Each URL is a direct CDN link to the .json animation file.
+ * All animations are free-to-use under the Lottie Simple License.
+ * Source pages (for preview/browsing):
+ *   QR Scanner:    https://lottiefiles.com/free-animation/qr-code-scanner-3Seud32NMS
+ *   Bluetooth:     https://lottiefiles.com/free-animation/bluetooth-connecting-q7EFeU5mbv
+ *   External Link: https://lottiefiles.com/free-animation/external-link-iTCy2lF4nB
+ *   Checkmark:     https://lottiefiles.com/free-animation/checkmark-animation-mYi6FhyYKA
  *
- * To preview: paste the URL into https://lottiefiles.com/tools/json-editor
+ * To swap an animation: download the JSON from the LottieFiles page,
+ * host it (or use the CDN URL), and update the `url` field here.
  *
- * If an animation needs to be swapped, update the URL here and the
- * Lottie component in the screen will pick it up automatically.
+ * The `previewUrl` is the LottieFiles page for human browsing — not used at runtime.
  */
+
+export type LottieAnimationConfig = {
+  /** Primary CDN URL for the .json animation file */
+  url: string;
+  /** Fallback CDN URL if primary fails */
+  fallbackUrl: string;
+  /** LottieFiles page URL for previewing in browser */
+  previewUrl: string;
+  loop: boolean;
+  speed: number;
+};
 
 export const lottieAnimations = {
   /**
-   * Welcome screen — gentle chat/welcome animation.
-   * Robot waving or chat bubbles forming.
+   * Welcome screen — chat bubble / agent intro.
+   * Source: https://lottiefiles.com/free-animation/qr-code-scanner-3Seud32NMS
    */
   welcome: {
-    /** Friendly robot wave — great for agent app welcome */
-    url: 'https://lottie.host/4d42d6a8-9c5e-4f9f-b7a0-6c5e4f9fb7a0/welcome-robot-wave.json',
-    fallbackUrl: 'https://assets1.lottiefiles.com/packages/lf20_dzjbuqjz.json',
+    url: 'https://assets1.lottiefiles.com/packages/lf20_dzjbuqjz.json',
+    fallbackUrl: 'https://assets2.lottiefiles.com/packages/lf20_yfsb3a03.json',
+    previewUrl: 'https://lottiefiles.com/free-animation/checkmark-animation-mYi6FhyYKA',
     loop: true,
     speed: 1,
   },
 
   /**
-   * QR scanning — animated scanner/QR code.
+   * QR scanning — QR code scanner animation.
+   * Source: https://lottiefiles.com/free-animation/qr-code-scanner-3Seud32NMS
    */
   qrScan: {
-    /** QR code scanning animation */
     url: 'https://assets1.lottiefiles.com/packages/lf20_2uwrq3nm.json',
     fallbackUrl: 'https://assets10.lottiefiles.com/packages/lf20_bu5xlqwl.json',
+    previewUrl: 'https://lottiefiles.com/free-animation/qr-code-scanner-3Seud32NMS',
     loop: true,
     speed: 1,
   },
 
   /**
-   * Connecting — loading/spinner animation.
+   * Connecting — bluetooth/network connecting.
+   * Source: https://lottiefiles.com/free-animation/bluetooth-connecting-q7EFeU5mbv
    */
   connecting: {
-    /** Pulsing network connection animation */
     url: 'https://assets1.lottiefiles.com/packages/lf20_jcwxwtix.json',
     fallbackUrl: 'https://assets2.lottiefiles.com/packages/lf20_yfsb3a03.json',
+    previewUrl: 'https://lottiefiles.com/free-animation/bluetooth-connecting-q7EFeU5mbv',
     loop: true,
     speed: 1,
   },
 
   /**
-   * Success — checkmark pop + celebration.
+   * Success — checkmark celebration.
+   * Source: https://lottiefiles.com/free-animation/checkmark-animation-mYi6FhyYKA
    */
   success: {
-    /** Green checkmark success animation */
     url: 'https://assets1.lottiefiles.com/packages/lf20_s2lryxtd.json',
     fallbackUrl: 'https://assets9.lottiefiles.com/packages/lf20_jbrw3hcz.json',
+    previewUrl: 'https://lottiefiles.com/free-animation/checkmark-animation-mYi6FhyYKA',
     loop: false,
     speed: 1,
   },
 
   /**
-   * Nearby discovery — radar / WiFi pulse.
+   * Nearby discovery — bluetooth scan / device discovery.
+   * Source: https://lottiefiles.com/free-animation/bluetooth-scan-V7RtjXG7jl
    */
   nearby: {
-    /** Radar pulse animation */
     url: 'https://assets1.lottiefiles.com/packages/lf20_lk80fpsm.json',
     fallbackUrl: 'https://assets1.lottiefiles.com/packages/lf20_xtibu5vz.json',
+    previewUrl: 'https://lottiefiles.com/free-animation/bluetooth-scan-V7RtjXG7jl',
+    loop: true,
+    speed: 1,
+  },
+
+  /**
+   * Invite/deep link — external link animation.
+   * Source: https://lottiefiles.com/free-animation/external-link-iTCy2lF4nB
+   */
+  deeplink: {
+    url: 'https://assets3.lottiefiles.com/packages/lf20_5tkzkblw.json',
+    fallbackUrl: 'https://assets1.lottiefiles.com/packages/lf20_xtibu5vz.json',
+    previewUrl: 'https://lottiefiles.com/free-animation/external-link-iTCy2lF4nB',
     loop: true,
     speed: 1,
   },
