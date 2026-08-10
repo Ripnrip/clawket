@@ -1499,11 +1499,13 @@ function EditorModal({ controller, theme, styles }: EditorModalProps): React.JSX
         <ScrollView contentContainerStyle={styles.modalBody}>
           <QuickConnectionPanel
             onSelectTarget={(target) => {
-              if (target === 'local') {
-                setQuickPage('localQuickConnect');
+              if (target === 'youmind') {
+                beginYouMindSignIn();
                 return;
               }
-              beginYouMindSignIn();
+              // local + Tailscale/Bonjour/Multipeer/AirDrop all open the local guide
+              // (transport-specific Lottie + CLI live inside QuickConnectGuideCard).
+              setQuickPage('localQuickConnect');
             }}
           />
         </ScrollView>

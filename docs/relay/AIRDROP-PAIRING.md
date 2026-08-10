@@ -68,6 +68,19 @@ AirDrop is peer-to-peer Wi-Fi + Bluetooth, but Apple does not expose a long-live
 
 Whatever URL is shared via AirDrop still contains the bridge token. Treat an AirDrop share the same way you would treat showing someone a QR code: only send it to a device you trust.
 
-## Status
+## Multica / Linear tracking
 
-AirDrop share-sheet support is implemented as a thin wrapper around the existing QR payload on the CLI and menu bar. Clients consume the deep link / JSON without a separate AirDrop transport.
+| ID | Item |
+| --- | --- |
+| HAB-239 | Epic: Pairing transports onboarding + Lottie (3 clients) |
+| HAB-240 | Shared Lottie asset pack |
+| HAB-241 | Clawket mobile onboarding transport cards + Lottie |
+| HAB-242 | Agent Habitat Chat onboarding transport + Lottie |
+| HAB-243 | Hermes App first-run pair chooser + Lottie |
+| HAB-244 | Docs cross-links |
+
+Linear project: https://linear.app/binary-bros/project/hermes-pairing-transports-onboarding-0aee73d402ae  
+(Linear free tier blocked new issues — Multica HAB-* are the live tickets.)
+
+Multica project: Hermes Pairing Transports Onboarding
+
