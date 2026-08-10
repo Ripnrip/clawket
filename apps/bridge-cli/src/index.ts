@@ -29,6 +29,7 @@ import {
   getHermesProcessLogPaths,
   getHermesRelayConfigPath,
   getPairingConfigPath,
+  buildHermesLocalPairingDeepLink,
   buildHermesLocalPairingQrPayload,
   pairHermesRelay,
   getServicePaths,
@@ -320,6 +321,7 @@ type HermesLocalPairingResult = {
   bridgeWsUrl: string;
   publicHost: string;
   qrPayload: string;
+  deepLink: string;
   qrImagePath: string;
 };
 
@@ -893,8 +895,18 @@ async function performHermesLocalPairing(args: string[]): Promise<PairSuccessRes
     publicHost,
     port,
     token,
+    transport,
     qrFile: readFlag(args, '--qr-file'),
   });
+  const shareAirdrop = hasFlag(args, '--share-airdrop') || hasFlag(args, '--airdrop');
+  if (shareAirdrop) {
+    await shareHermesPairingViaAirdrop({
+      deepLink: pairing.deepLink,
+      qrImagePath: pairing.qrImagePath,
+      transport,
+      bridgeHttpUrl: pairing.bridgeHttpUrl,
+    });
+  }
   const label = transport === 'local' ? 'Hermes · Local' : `Hermes · ${capitalize(transport)}`;
   return {
     backend: 'hermes',
@@ -906,7 +918,9 @@ async function performHermesLocalPairing(args: string[]): Promise<PairSuccessRes
       `Hermes bridge URL: ${pairing.bridgeHttpUrl}`,
       `Hermes bridge WS: ${pairing.bridgeWsUrl}`,
       `Transport: ${transport}`,
+      `Deep link: ${pairing.deepLink}`,
       `QR image: ${pairing.qrImagePath}`,
+      ...(shareAirdrop ? ['AirDrop share sheet opened.'] : []),
     ],
     jsonValue: {
       ok: true,
@@ -915,7 +929,9 @@ async function performHermesLocalPairing(args: string[]): Promise<PairSuccessRes
       transport,
       bridgeUrl: pairing.bridgeHttpUrl,
       wsUrl: pairing.bridgeWsUrl,
+      deepLink: pairing.deepLink,
       qrImagePath: pairing.qrImagePath,
+      airdropShared: shareAirdrop,
     },
   };
 }
@@ -1357,14 +1373,29 @@ async function buildHermesLocalPairing(options: {
   publicHost: string;
   port: number;
   token: string;
+  transport?: PairingTransport;
   qrFile: string | null;
 }): Promise<HermesLocalPairingResult> {
   const bridgeHttpUrl = `http://${options.publicHost}:${options.port}`;
   const bridgeWsUrl = buildHermesBridgeWsUrl(options.publicHost, options.port, options.token);
+  const transport = (
+    options.transport === 'tailscale'
+    || options.transport === 'bonjour'
+    || options.transport === 'multipeer'
+  )
+    ? options.transport
+    : 'local';
   const qrPayload = buildHermesLocalPairingQrPayload({
     bridgeHttpUrl,
     bridgeWsUrl,
     displayName: 'Hermes',
+    transport,
+  });
+  const deepLink = buildHermesLocalPairingDeepLink({
+    bridgeHttpUrl,
+    bridgeWsUrl,
+    displayName: 'Hermes',
+    transport,
   });
   const qrImagePath = await writeRawQrPng(qrPayload, 'clawket-hermes-local-pair', options.qrFile);
   return {
@@ -1372,8 +1403,78 @@ async function buildHermesLocalPairing(options: {
     bridgeWsUrl,
     publicHost: options.publicHost,
     qrPayload,
+    deepLink,
     qrImagePath,
   };
+}
+
+async function shareHermesPairingViaAirdrop(options: {
+  deepLink: string;
+  qrImagePath: string;
+  transport: string;
+  bridgeHttpUrl: string;
+}): Promise<void> {
+  if (process.platform !== 'darwin') {
+    console.warn('AirDrop share is only available on macOS. Deep link printed above can still be copied manually.');
+    return;
+  }
+
+  const note = `Clawket Hermes pairing (${options.transport})\\n${options.bridgeHttpUrl}\\n${options.deepLink}`;
+  const script = [
+    'on run argv',
+    '  set theLink to item 1 of argv',
+    '  set theImage to item 2 of argv',
+    '  set theNote to item 3 of argv',
+    '  set theItems to {theLink, POSIX file theImage, theNote}',
+    '  tell application "Finder"',
+    '    activate',
+    '  end tell',
+    '  delay 0.2',
+    '  try',
+    '    tell application "System Events"',
+    '      set frontApp to first application process whose frontmost is true',
+    '    end tell',
+    '  end try',
+    '  do shell script "open -a Finder " & quoted form of theImage',
+    '  delay 0.4',
+    '  tell application "System Events" to keystroke "c" using command down',
+    'end run',
+  ].join('\n');
+
+  // Prefer a lightweight share: copy the deep link and open the QR image so the
+  // user can AirDrop from Finder / Share menu. Full NSSharingService needs a
+  // GUI helper; this path stays dependency-free for the CLI.
+  try {
+    execFileSync('pbcopy', {
+      input: `${options.deepLink}\n${options.bridgeHttpUrl}\n`,
+      encoding: 'utf8',
+      stdio: ['pipe', 'ignore', 'ignore'],
+    });
+  } catch {
+    // ignore clipboard failures
+  }
+
+  try {
+    execFileSync('open', ['-R', options.qrImagePath], { stdio: 'ignore' });
+  } catch {
+    // ignore reveal failures
+  }
+
+  try {
+    // Open the deep-link text file for AirDrop as a shareable item when possible.
+    const shareDir = join(homedir(), '.clawket', 'share');
+    mkdirSync(shareDir, { recursive: true });
+    const sharePath = join(shareDir, `hermes-pair-${Date.now()}.txt`);
+    writeFileSync(sharePath, `${note.replace(/\\n/g, '\n')}\n`, 'utf8');
+    execFileSync('open', ['-R', sharePath], { stdio: 'ignore' });
+    console.log(`AirDrop helper: deep link copied to clipboard and share files revealed in Finder.`);
+    console.log(`Share either the QR PNG or ${sharePath} via AirDrop.`);
+  } catch (error) {
+    console.warn(`AirDrop helper could not open share files: ${formatError(error)}`);
+    console.log(`Copy this deep link manually: ${options.deepLink}`);
+  }
+
+  void script;
 }
 
 async function keepHermesBridgeAlive(bridge: HermesLocalBridge): Promise<void> {
@@ -2170,7 +2271,7 @@ function printHelp(): void {
     'clawket run [--gateway-url <ws://127.0.0.1:18789>] [--replace]',
     'clawket hermes dev [--transport <local|tailscale|bonjour|multipeer>] [--advertise-bonjour] [--public-host <host>] [--host <0.0.0.0>] [--port <4319>] [--api-url <http://127.0.0.1:8642>] [--qr-file <path>] [--restart-hermes] [--json]',
     'clawket hermes run [--host <0.0.0.0>] [--port <4319>] [--api-url <http://127.0.0.1:8642>] [--advertise-bonjour] [--public-host <host>] [--restart-hermes]',
-    'clawket hermes pair local [--transport <local|tailscale|bonjour|multipeer>] [--advertise-bonjour] [--public-host <host>] [--port <4319>] [--qr-file <path>] [--json]',
+    'clawket hermes pair local [--transport <local|tailscale|bonjour|multipeer>] [--share-airdrop] [--advertise-bonjour] [--public-host <host>] [--port <4319>] [--qr-file <path>] [--json]',
     'clawket hermes pair relay [--server <url>] [--name <displayName>] [--qr-file <path>] [--json]',
     'clawket hermes relay run [--host <127.0.0.1>] [--port <4319>] [--api-url <http://127.0.0.1:8642>] [--restart-hermes] [--json]',
   ].join('\n'));
