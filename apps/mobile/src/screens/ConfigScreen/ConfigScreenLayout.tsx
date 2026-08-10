@@ -1332,6 +1332,7 @@ function EditorModal({ controller, theme, styles }: EditorModalProps): React.JSX
   const isLockedRelayEditor = isEditing && controller.isRelayEditorLocked;
   const [editorTab, setEditorTab] = useState<EditorTab>(isEditing ? 'manual' : 'quick');
   const [quickPage, setQuickPage] = useState<'quick' | 'localQuickConnect' | 'youmindSignIn'>('quick');
+  const [localGuideMode, setLocalGuideMode] = useState<'relay' | 'local' | 'tailscale' | 'bonjour' | 'multipeer' | 'airdrop'>('relay');
   const [draftYouMindConfigId, setDraftYouMindConfigId] = useState<string | null>(null);
   const EDITOR_TABS = useMemo<{ key: EditorTab; label: string }[]>(() => [
     { key: 'quick', label: t('Quick Connect') },
@@ -1460,7 +1461,7 @@ function EditorModal({ controller, theme, styles }: EditorModalProps): React.JSX
               <Text style={styles.inlineBackButtonText}>{t('Back', { ns: 'chat' })}</Text>
             </Pressable>
 
-            <ConnectionHelpQuick />
+            <ConnectionHelpQuick initialMode={localGuideMode} />
 
             <View style={styles.quickActionsWrap}>
               <Pressable
@@ -1503,8 +1504,18 @@ function EditorModal({ controller, theme, styles }: EditorModalProps): React.JSX
                 beginYouMindSignIn();
                 return;
               }
-              // local + Tailscale/Bonjour/Multipeer/AirDrop all open the local guide
-              // (transport-specific Lottie + CLI live inside QuickConnectGuideCard).
+              if (target === 'local') {
+                setLocalGuideMode('relay');
+              } else if (
+                target === 'tailscale'
+                || target === 'bonjour'
+                || target === 'multipeer'
+                || target === 'airdrop'
+              ) {
+                setLocalGuideMode(target);
+              } else {
+                setLocalGuideMode('relay');
+              }
               setQuickPage('localQuickConnect');
             }}
           />
