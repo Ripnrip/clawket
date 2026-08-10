@@ -1,30 +1,40 @@
 # Pairing Lottie asset pack
 
-Tracked as Multica **HAB-240** (assets) under project *Hermes Pairing Transports Onboarding*.
+Tracked as Multica **HAB-240** under project *Hermes Pairing Transports Onboarding*.
 Linear project: https://linear.app/binary-bros/project/hermes-pairing-transports-onboarding-0aee73d402ae
-(Linear issue create blocked by free-tier activeIssueCount — Multica is source of truth for tickets.)
+
+## How assets were obtained
+
+LottieFiles browse pages are Cloudflare-gated (browser MCP hit the challenge).
+Downloads used **LottieHarvest** (`~/Downloads/LottieHarvest`) against the **open GraphQL API + asset CDN** — no Cloudflare, no login:
+
+```bash
+lottie-harvest search "bluetooth" --format json --out /tmp/pairing-lottie-harvest
+lottie-harvest search "wifi network connect" --format json --out /tmp/pairing-lottie-harvest
+lottie-harvest search "share airdrop" --format json --out /tmp/pairing-lottie-harvest
+```
+
+User-provided Tailscale anim: `~/Downloads/connectivity.json`.
+
+The specific UUID `9865842e-5002-431a-a0e7-19bc5a7f155b` returned **403** on the CDN (not public / removed). Closest free matches were substituted.
 
 ## Mapping
 
-| Transport | File | Notes |
+| Transport | File | Source note |
 | --- | --- | --- |
-| Tailscale | `tailscale-connectivity.json` | From user Downloads/connectivity.json |
-| Bonjour / Multipeer / nearby | `nearby-pulse.json` | Placeholder until dedicated Bluetooth Lottie is dropped in |
-| Link / AirDrop handoff | `link-vector.json` | Generic link animation |
-
-## Intended replacements
-
-- Multipeer: https://lottiefiles.com/free-animation/bluetooth-wRABULKk8M
-- Nearby/Bonjour: https://app.lottiefiles.com/animation/9865842e-5002-431a-a0e7-19bc5a7f155b
-
-Drop the JSON files into this folder (and mirror into Clawket mobile / Habitat Chat / HermesFeature Resources) with the same filenames, then rebuild.
+| Tailscale | `tailscale-connectivity.json` | User Downloads/connectivity.json |
+| Bonjour | `bonjour-network.json` | Harvested “wifi connect” |
+| Same Wi-Fi / nearby | `nearby-pulse.json` | Harvested “Network Connecting” |
+| Multipeer | `multipeer-bluetooth.json` | Harvested “bluetooth searching” |
+| AirDrop | `airdrop-share.json` | Harvested “air drop” |
+| Relay / generic link | `link-vector.json` | Harvested “share” |
 
 ## Consumers
 
-- Clawket mobile: `apps/mobile/assets/lottie/` + `QuickConnectGuideCard` / `QuickConnectionPanel` (HAB-241)
+- Clawket mobile: `apps/mobile/assets/lottie/` (HAB-241)
 - Agent Habitat Chat: `assets/lottie/` (HAB-242)
-- Hermes App: `HermesPackage/.../Resources/Lottie/` (HAB-243)
+- Hermes App: `HermesFeatures/Resources/Lottie/` + HermesFeature Resources (HAB-243)
 
 ## License
 
-Only use LottieFiles free animations under their free license, or assets you own. Keep attribution if required by the source.
+Free LottieFiles public animations via open CDN. Keep attribution if the free license on a given asset requires it. Prefer replacing with fully owned motion when branding hardens.

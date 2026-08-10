@@ -18,7 +18,7 @@ export type PairingTransportOption = {
   pairCommand: string;
   /** Optional agent prompt pair command (defaults to pairCommand) */
   agentPairCommand?: string;
-  /** Lottie JSON asset (bundled). AirDrop reuses nearby until a dedicated share anim ships. */
+  /** Lottie JSON asset (bundled). */
   lottie: AnimationObject | object;
   /** Whether this is a persistent data channel (AirDrop is handoff-only). */
   persistent: boolean;
@@ -27,14 +27,20 @@ export type PairingTransportOption = {
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const lottieTailscale = require('../../../assets/lottie/tailscale-connectivity.json');
 // eslint-disable-next-line @typescript-eslint/no-require-imports
+const lottieBonjour = require('../../../assets/lottie/bonjour-network.json');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const lottieNearby = require('../../../assets/lottie/nearby-pulse.json');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const lottieMultipeer = require('../../../assets/lottie/multipeer-bluetooth.json');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const lottieAirdrop = require('../../../assets/lottie/airdrop-share.json');
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const lottieLink = require('../../../assets/lottie/link-vector.json');
 
 /**
  * Canonical pairing-transport chooser used by Clawket mobile onboarding.
  * Multica: HAB-240 (assets) · HAB-241 (mobile UI)
- * Linear project: Hermes Pairing Transports Onboarding
+ * Assets harvested via LottieHarvest GraphQL (open CDN) — see docs/pairing-lottie/README.md
  */
 export const PAIRING_TRANSPORT_OPTIONS: readonly PairingTransportOption[] = [
   {
@@ -67,7 +73,7 @@ export const PAIRING_TRANSPORT_OPTIONS: readonly PairingTransportOption[] = [
     label: 'Bonjour',
     description: 'Zero-config discovery on LAN or MagicDNS. Host advertises via mDNS.',
     pairCommand: 'clawket hermes pair local --transport bonjour --advertise-bonjour',
-    lottie: lottieNearby,
+    lottie: lottieBonjour,
     persistent: true,
   },
   {
@@ -75,7 +81,7 @@ export const PAIRING_TRANSPORT_OPTIONS: readonly PairingTransportOption[] = [
     label: 'Multipeer',
     description: 'Nearby Apple devices over Multipeer Connectivity (proximity / peer-to-peer).',
     pairCommand: 'clawket hermes pair local --transport multipeer',
-    lottie: lottieNearby,
+    lottie: lottieMultipeer,
     persistent: true,
   },
   {
@@ -83,7 +89,7 @@ export const PAIRING_TRANSPORT_OPTIONS: readonly PairingTransportOption[] = [
     label: 'AirDrop',
     description: 'Share the pairing link from the host share sheet. Not a live tunnel — just the handoff.',
     pairCommand: 'clawket hermes pair local --share-airdrop',
-    lottie: lottieLink,
+    lottie: lottieAirdrop,
     persistent: false,
   },
 ] as const;
