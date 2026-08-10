@@ -33,7 +33,7 @@ export function PairingTransportLottie({
   return (
     <View style={boxStyle}>
       <LottieView
-        source={source}
+        source={source as any}
         autoPlay={autoPlay}
         loop={loop}
         style={styles.animation}
