@@ -450,3 +450,24 @@ if (!globalThis.crypto.getRandomValues) {
     return array;
   };
 }
+
+// RN-style global used by expo-modules-core internals
+(globalThis as any).__DEV__ = false;
+
+// Minimal expo-modules-core EventEmitter shim (testEnvironment: 'node' has no window.expo)
+if (!(globalThis as any).expo) {
+  (globalThis as any).expo = {};
+}
+if (!(globalThis as any).expo.EventEmitter) {
+  (globalThis as any).expo.EventEmitter = class EventEmitter {
+    addListener() {
+      return { remove() {} };
+    }
+    removeListener() {}
+    removeAllListeners() {}
+    listeners() {
+      return [];
+    }
+    emit() {}
+  };
+}

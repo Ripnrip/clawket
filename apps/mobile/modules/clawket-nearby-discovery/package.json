@@ -1,0 +1,9 @@
+{
+  "name": "@clawket/nearby-discovery",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local Expo module for iOS mDNS/Bonjour discovery of Hermes gateways in Clawket.",
+  "license": "Proprietary",
+  "author": "Clawket",
+  "homepage": "https://github.com/openai/clawket"
+}

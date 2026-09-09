@@ -46,10 +46,20 @@
       "title": "Verbindung...",
       "subtitle": "Gateway-Verbindung wird überprüft"
     },
-    "comingSoon": {
-      "title": "Demnächst verfügbar",
-      "subtitle": "Diese Funktion ist noch nicht verfügbar",
-      "goBack": "Zurück"
+    "nearbyDiscovery": {
+      "looking": "Suche nach Hermes-Gateways in diesem Netzwerk…",
+      "subtitle": "Stellen Sie sicher, dass Ihr Host läuft und beide Geräte im selben Netzwerk sind.",
+      "found": "{{name}} gefunden",
+      "noGateways": "In diesem Netzwerk wurden keine Gateways gefunden.",
+      "unsupported": "Nähe-Suche ist auf diesem Gerät nicht verfügbar.",
+      "error": "Suche fehlgeschlagen.",
+      "enterManually": "Gateway manuell eingeben"
+    },
+    "deeplink": {
+      "checking": "Prüfe auf Einladungslink…",
+      "waiting": "Warte auf einen Einladungslink…",
+      "waitingSubtitle": "Öffnen Sie einen Einladungslink aus Nachrichten oder AirDrop oder kopieren Sie ihn in die Zwischenablage.",
+      "enterManually": "Verbindung manuell eingeben"
     },
     "back": "Zurück",
     "cancel": "Abbrechen"

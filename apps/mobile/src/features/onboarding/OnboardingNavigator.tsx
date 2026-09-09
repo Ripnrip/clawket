@@ -18,7 +18,8 @@ import { WelcomeScreen } from './WelcomeScreen';
 import { ConnectMethodScreen } from './ConnectMethodScreen';
 import { ManualEntryScreen } from './ManualEntryScreen';
 import { ConnectingScreen } from './ConnectingScreen';
-import { ComingSoonScreen } from './ComingSoonScreen';
+import { NearbyDiscoveryScreen } from './NearbyDiscoveryScreen';
+import { DeepLinkImportScreen } from './DeepLinkImportScreen';
 import { SuccessScreen } from './SuccessScreen';
 import { analyticsEvents } from '../../services/analytics/events';
 import { hapticError } from './haptics';
@@ -30,9 +31,10 @@ export type OnboardingStackParamList = {
   Welcome: undefined;
   ConnectMethod: undefined;
   QRScanner: undefined;
-  ManualEntry: undefined;
+  ManualEntry: { url?: string; token?: string } | undefined;
+  NearbyDiscovery: undefined;
+  DeepLinkImport: undefined;
   Connecting: undefined;
-  ComingSoon: { method: ConnectMethod };
   Success: { config: GatewayConfig; method: ConnectMethod; startedAt: number };
 };
 
@@ -167,23 +169,27 @@ export function OnboardingNavigator({ isFirstLaunch, gateway, onComplete, onSkip
           navigation.navigate('ManualEntry');
           break;
         case 'nearby':
+          navigation.navigate('NearbyDiscovery');
+          break;
         case 'deeplink':
-          navigation.navigate('ComingSoon', { method });
+          navigation.navigate('DeepLinkImport');
           break;
       }
     },
     [],
   );
 
-  const handleQrScanned = useCallback(
-    (result: QRScanResult, navigation: OnboardingNavigationProp) => {
-      analyticsEvents.onboardingQrScanned({ success: true });
-
-      // If the QR result contains relay data with an access code, claim it first
+  const handleConnectFromScanResult = useCallback(
+    (
+      result: GatewayScanPayload,
+      method: ConnectMethod,
+      navigation: OnboardingNavigationProp,
+    ) => {
+      // If the payload contains relay data with an access code, claim it first
       // before building a GatewayConfig. This mirrors the ConfigScreen flow.
       const claimTask = result.relay?.accessCode
-        ? claimRelayPairing(result as GatewayScanPayload, relayClaimInFlightRef)
-        : Promise.resolve(result as GatewayScanPayload);
+        ? claimRelayPairing(result, relayClaimInFlightRef)
+        : Promise.resolve(result);
 
       void claimTask
         .then((resolved) => {
@@ -197,12 +203,12 @@ export function OnboardingNavigator({ isFirstLaunch, gateway, onComplete, onSkip
             ...(resolved.hermes ? { hermes: resolved.hermes } : {}),
             ...(resolved.relay ? { relay: resolved.relay } : {}),
           };
-          handleConnect(config, 'qr', navigation);
+          handleConnect(config, method, navigation);
         })
         .catch((err: unknown) => {
           const message = err instanceof Error ? err.message : 'Could not claim this pairing code.';
           analyticsEvents.onboardingConnectionResolved({
-            method: 'qr',
+            method,
             result: 'failure',
             duration_ms: 0,
             error_code: 'relay_claim_error',
@@ -216,6 +222,35 @@ export function OnboardingNavigator({ isFirstLaunch, gateway, onComplete, onSkip
         });
     },
     [handleConnect],
+  );
+
+  const handleQrScanned = useCallback(
+    (result: QRScanResult, navigation: OnboardingNavigationProp) => {
+      analyticsEvents.onboardingQrScanned({ success: true });
+      handleConnectFromScanResult(result as GatewayScanPayload, 'qr', navigation);
+    },
+    [handleConnectFromScanResult],
+  );
+
+  const handleNearbyReady = useCallback(
+    (payload: GatewayScanPayload, navigation: OnboardingNavigationProp) => {
+      handleConnectFromScanResult(payload, 'nearby', navigation);
+    },
+    [handleConnectFromScanResult],
+  );
+
+  const handleNearbyNeedsCredentials = useCallback(
+    (url: string, navigation: OnboardingNavigationProp) => {
+      navigation.navigate('ManualEntry', { url });
+    },
+    [],
+  );
+
+  const handleDeepLinkPayload = useCallback(
+    (payload: GatewayScanPayload, navigation: OnboardingNavigationProp) => {
+      handleConnectFromScanResult(payload, 'deeplink', navigation);
+    },
+    [handleConnectFromScanResult],
   );
 
   const handleManualSubmit = useCallback(
@@ -321,8 +356,37 @@ export function OnboardingNavigator({ isFirstLaunch, gateway, onComplete, onSkip
           trackStepViewed('manualEntry');
           return (
             <ManualEntryScreen
+              initialUrl={props.route.params?.url}
+              initialToken={props.route.params?.token}
               onBack={() => props.navigation.goBack()}
               onSubmit={(url, token) => handleManualSubmit(url, token, props.navigation)}
+            />
+          );
+        }}
+      </OnboardingStack.Screen>
+
+      <OnboardingStack.Screen name="NearbyDiscovery">
+        {(props) => {
+          trackStepViewed('nearbyDiscovery');
+          return (
+            <NearbyDiscoveryScreen
+              onReady={(payload) => handleNearbyReady(payload, props.navigation)}
+              onNeedsCredentials={(url) => handleNearbyNeedsCredentials(url, props.navigation)}
+              onManualEntry={() => props.navigation.navigate('ManualEntry')}
+              onBack={() => props.navigation.goBack()}
+            />
+          );
+        }}
+      </OnboardingStack.Screen>
+
+      <OnboardingStack.Screen name="DeepLinkImport">
+        {(props) => {
+          trackStepViewed('deepLinkImport');
+          return (
+            <DeepLinkImportScreen
+              onPayload={(payload) => handleDeepLinkPayload(payload, props.navigation)}
+              onManualEntry={() => props.navigation.navigate('ManualEntry')}
+              onBack={() => props.navigation.goBack()}
             />
           );
         }}
@@ -333,12 +397,6 @@ export function OnboardingNavigator({ isFirstLaunch, gateway, onComplete, onSkip
           trackStepViewed('connecting');
           return <ConnectingScreen error={connectingError} />;
         }}
-      </OnboardingStack.Screen>
-
-      <OnboardingStack.Screen name="ComingSoon" options={screenOptions}>
-        {(props) => (
-          <ComingSoonScreen onBack={() => props.navigation.goBack()} />
-        )}
       </OnboardingStack.Screen>
 
       <OnboardingStack.Screen name="Success" options={successScreenOptions}>

@@ -46,10 +46,20 @@
       "title": "Conectando...",
       "subtitle": "Verificando tu conexión de gateway"
     },
-    "comingSoon": {
-      "title": "Próximamente",
-      "subtitle": "Esta función aún no está disponible",
-      "goBack": "Volver"
+    "nearbyDiscovery": {
+      "looking": "Buscando gateways de Hermes en esta red…",
+      "subtitle": "Asegúrate de que tu host esté ejecutándose y ambos dispositivos estén en la misma red.",
+      "found": "{{name}} encontrado",
+      "noGateways": "No se encontraron gateways en esta red.",
+      "unsupported": "El descubrimiento cercano no está disponible en este dispositivo.",
+      "error": "Error en la búsqueda.",
+      "enterManually": "Introducir gateway manualmente"
+    },
+    "deeplink": {
+      "checking": "Comprobando si hay un enlace de invitación…",
+      "waiting": "Esperando un enlace de invitación…",
+      "waitingSubtitle": "Abre un enlace de invitación desde Mensajes o AirDrop, o copia uno al portapapeles.",
+      "enterManually": "Introducir conexión manualmente"
     },
     "back": "Volver",
     "cancel": "Cancelar"

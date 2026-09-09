@@ -20,16 +20,18 @@ import { hapticLight } from './haptics';
 type Props = {
   onSubmit: (url: string, token: string) => void;
   onBack: () => void;
+  initialUrl?: string;
+  initialToken?: string;
 };
 
-export function ManualEntryScreen({ onSubmit, onBack }: Props): React.JSX.Element {
+export function ManualEntryScreen({ onSubmit, onBack, initialUrl, initialToken }: Props): React.JSX.Element {
   const { theme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation('onboarding');
   const colors = theme.colors;
 
-  const [url, setUrl] = useState('');
-  const [token, setToken] = useState('');
+  const [url, setUrl] = useState(initialUrl ?? '');
+  const [token, setToken] = useState(initialToken ?? '');
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = useCallback(() => {

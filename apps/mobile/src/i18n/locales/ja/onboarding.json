@@ -46,10 +46,20 @@
       "title": "接続中...",
       "subtitle": "ゲートウェイ接続を検証しています"
     },
-    "comingSoon": {
-      "title": "近日対応",
-      "subtitle": "この機能はまだご利用いただけません",
-      "goBack": "戻る"
+    "nearbyDiscovery": {
+      "looking": "このネットワークで Hermes ゲートウェイを検索中…",
+      "subtitle": "ホストが実行されていて、両方のデバイスが同じネットワークにあることを確認してください。",
+      "found": "{{name}} が見つかりました",
+      "noGateways": "このネットワークにゲートウェイが見つかりませんでした。",
+      "unsupported": "このデバイスでは近くの検索を利用できません。",
+      "error": "検索に失敗しました。",
+      "enterManually": "ゲートウェイを手動で入力"
+    },
+    "deeplink": {
+      "checking": "招待リンクを確認中…",
+      "waiting": "招待リンクを待っています…",
+      "waitingSubtitle": "メッセージや AirDrop から招待リンクを開くか、クリップボードにコピーしてください。",
+      "enterManually": "接続情報を手動で入力"
     },
     "back": "戻る",
     "cancel": "キャンセル"

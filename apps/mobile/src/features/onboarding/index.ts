@@ -6,7 +6,8 @@ export { WelcomeScreen } from './WelcomeScreen';
 export { ConnectMethodScreen } from './ConnectMethodScreen';
 export { ManualEntryScreen } from './ManualEntryScreen';
 export { ConnectingScreen } from './ConnectingScreen';
-export { ComingSoonScreen } from './ComingSoonScreen';
+export { NearbyDiscoveryScreen } from './NearbyDiscoveryScreen';
+export { DeepLinkImportScreen } from './DeepLinkImportScreen';
 export { SuccessScreen } from './SuccessScreen';
 
 export { shouldShowOnboarding } from './shouldShowOnboarding';

@@ -46,10 +46,20 @@
       "title": "Connecting...",
       "subtitle": "Verifying your gateway connection"
     },
-    "comingSoon": {
-      "title": "Coming Soon",
-      "subtitle": "This feature is not available yet",
-      "goBack": "Go Back"
+    "nearbyDiscovery": {
+      "looking": "Looking for Hermes gateways on this network…",
+      "subtitle": "Make sure your host is running and both devices are on the same network.",
+      "found": "Found {{name}}",
+      "noGateways": "No gateways were found on this network.",
+      "unsupported": "Nearby discovery isn't available on this device.",
+      "error": "Discovery failed.",
+      "enterManually": "Enter Gateway Manually"
+    },
+    "deeplink": {
+      "checking": "Checking for an invite link…",
+      "waiting": "Waiting for an invite link…",
+      "waitingSubtitle": "Open an invite link from Messages or AirDrop, or copy one to the clipboard.",
+      "enterManually": "Enter connection manually"
     },
     "back": "Back",
     "cancel": "Cancel"
