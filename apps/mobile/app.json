@@ -17,9 +17,17 @@
       "bundleIdentifier": "com.binarybros.clawket",
       "infoPlist": {
         "NSCameraUsageDescription": "Allow Clawket to use your camera to scan QR codes and take photos to send to AI.",
+        "NSLocalNetworkUsageDescription": "Allow Clawket to find and connect to Hermes gateways on your local network.",
+        "NSBonjourServices": [
+          "_hermes._tcp"
+        ],
         "NSPhotoLibraryAddUsageDescription": "Allow Clawket to save stats posters to your photo library.",
         "NSSpeechRecognitionUsageDescription": "Allow Clawket to transcribe your speech into chat messages.",
         "ITSAppUsesNonExemptEncryption": false,
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true,
+          "NSAllowsLocalNetworking": true
+        },
         "CFBundleAllowMixedLocalizations": true,
         "CFBundleLocalizations": [
           "en",

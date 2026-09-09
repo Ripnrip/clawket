@@ -8,7 +8,7 @@ const config = {
     }],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(tweetnacl|js-sha256)/)',
+    'node_modules/(?!(expo-modules-core|tweetnacl|js-sha256)/)',
   ],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   setupFiles: ['./jest.setup.ts'],

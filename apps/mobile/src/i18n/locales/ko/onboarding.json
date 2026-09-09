@@ -1,0 +1,67 @@
+{
+  "onboarding": {
+    "welcome": {
+      "title": "Clawket에 오신 것을 환영합니다",
+      "subtitle": "AI 에이전트 게이트웨이에 연결하고 채팅을 시작하세요",
+      "getStarted": "시작하기",
+      "haveConnection": "이미 연결 정보가 있습니다"
+    },
+    "connectMethod": {
+      "title": "어떻게 연결하시겠습니까?",
+      "subtitle": "원하는 연결 방법을 선택하세요",
+      "qr": {
+        "title": "QR 코드 스캔",
+        "description": "에이전트 게이트웨이의 QR 코드를 스캔하세요"
+      },
+      "nearby": {
+        "title": "주변 발견",
+        "description": "주변 기기 찾기",
+        "beta": "베타"
+      },
+      "manual": {
+        "title": "수동 입력",
+        "description": "게이트웨이 URL과 토큰을 수동으로 입력"
+      },
+      "deeplink": {
+        "title": "초대 링크",
+        "description": "메시지 또는 AirDrop에서 초대 링크 열기"
+      }
+    },
+    "success": {
+      "title": "모든 준비가 완료되었습니다!",
+      "subtitle": "에이전트 게이트웨이가 연결되었습니다",
+      "startChatting": "채팅 시작"
+    },
+    "manual": {
+      "title": "수동 설정",
+      "urlLabel": "게이트웨이 URL",
+      "urlPlaceholder": "https://your-gateway.example.com",
+      "tokenLabel": "액세스 토큰",
+      "tokenPlaceholder": "토큰 입력",
+      "connect": "연결",
+      "errorRequired": "게이트웨이 URL을 입력해 주세요",
+      "connecting": "연결 중..."
+    },
+    "connecting": {
+      "title": "연결 중...",
+      "subtitle": "게이트웨이 연결을 확인하는 중"
+    },
+    "nearbyDiscovery": {
+      "looking": "이 네트워크에서 Hermes 게이트웨이를 찾는 중…",
+      "subtitle": "호스트가 실행 중이고 두 기기가 같은 네트워크에 있는지 확인하세요.",
+      "found": "{{name}}을(를) 찾았습니다",
+      "noGateways": "이 네트워크에서 게이트웨이를 찾지 못했습니다.",
+      "unsupported": "이 기기에서는 주변 검색을 사용할 수 없습니다.",
+      "error": "검색에 실패했습니다.",
+      "enterManually": "게이트웨이 수동 입력"
+    },
+    "deeplink": {
+      "checking": "초대 링크 확인 중…",
+      "waiting": "초대 링크를 기다리는 중…",
+      "waitingSubtitle": "메시지 또는 AirDrop에서 초대 링크를 열거나 클립보드에 복사하세요.",
+      "enterManually": "연결 정보 수동 입력"
+    },
+    "back": "뒤로",
+    "cancel": "취소"
+  }
+}

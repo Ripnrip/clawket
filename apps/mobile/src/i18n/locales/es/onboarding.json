@@ -1,0 +1,67 @@
+{
+  "onboarding": {
+    "welcome": {
+      "title": "Bienvenido a Clawket",
+      "subtitle": "Conéctate a tu puerta de enlace de agente de IA y comienza a chatear",
+      "getStarted": "Comenzar",
+      "haveConnection": "Ya tengo una conexión"
+    },
+    "connectMethod": {
+      "title": "¿Cómo te gustaría conectarte?",
+      "subtitle": "Elige tu método de conexión preferido",
+      "qr": {
+        "title": "Escanear código QR",
+        "description": "Escanea el código QR de tu puerta de enlace del agente"
+      },
+      "nearby": {
+        "title": "Descubrimiento cercano",
+        "description": "Buscar dispositivos cercanos",
+        "beta": "Beta"
+      },
+      "manual": {
+        "title": "Entrada manual",
+        "description": "Introduce la URL del gateway y el token manualmente"
+      },
+      "deeplink": {
+        "title": "Enlace de invitación",
+        "description": "Abrir un enlace de invitación desde Mensajes o AirDrop"
+      }
+    },
+    "success": {
+      "title": "¡Todo listo!",
+      "subtitle": "Tu puerta de enlace del agente está conectada",
+      "startChatting": "Empezar a chatear"
+    },
+    "manual": {
+      "title": "Configuración manual",
+      "urlLabel": "URL del gateway",
+      "urlPlaceholder": "https://your-gateway.example.com",
+      "tokenLabel": "Token de acceso",
+      "tokenPlaceholder": "Introduce tu token",
+      "connect": "Conectar",
+      "errorRequired": "Por favor, introduce una URL de gateway",
+      "connecting": "Conectando..."
+    },
+    "connecting": {
+      "title": "Conectando...",
+      "subtitle": "Verificando tu conexión de gateway"
+    },
+    "nearbyDiscovery": {
+      "looking": "Buscando gateways de Hermes en esta red…",
+      "subtitle": "Asegúrate de que tu host esté ejecutándose y ambos dispositivos estén en la misma red.",
+      "found": "{{name}} encontrado",
+      "noGateways": "No se encontraron gateways en esta red.",
+      "unsupported": "El descubrimiento cercano no está disponible en este dispositivo.",
+      "error": "Error en la búsqueda.",
+      "enterManually": "Introducir gateway manualmente"
+    },
+    "deeplink": {
+      "checking": "Comprobando si hay un enlace de invitación…",
+      "waiting": "Esperando un enlace de invitación…",
+      "waitingSubtitle": "Abre un enlace de invitación desde Mensajes o AirDrop, o copia uno al portapapeles.",
+      "enterManually": "Introducir conexión manualmente"
+    },
+    "back": "Volver",
+    "cancel": "Cancelar"
+  }
+}

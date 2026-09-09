@@ -1,0 +1,67 @@
+{
+  "onboarding": {
+    "welcome": {
+      "title": "Willkommen bei Clawket",
+      "subtitle": "Verbinden Sie sich mit Ihrem KI-Agent-Gateway und starten Sie",
+      "getStarted": "Loslegen",
+      "haveConnection": "Ich habe bereits eine Verbindung"
+    },
+    "connectMethod": {
+      "title": "Wie möchten Sie sich verbinden?",
+      "subtitle": "Wählen Sie Ihre bevorzugte Verbindungsmethode",
+      "qr": {
+        "title": "QR-Code scannen",
+        "description": "Scannen Sie den QR-Code von Ihrem Agent-Gateway"
+      },
+      "nearby": {
+        "title": "In der Nähe",
+        "description": "Geräte in der Nähe finden",
+        "beta": "Beta"
+      },
+      "manual": {
+        "title": "Manuelle Eingabe",
+        "description": "Gateway-URL und Token manuell eingeben"
+      },
+      "deeplink": {
+        "title": "Einladungslink",
+        "description": "Einladungslink aus Nachrichten oder AirDrop öffnen"
+      }
+    },
+    "success": {
+      "title": "Alles bereit!",
+      "subtitle": "Ihr Agent-Gateway ist verbunden",
+      "startChatting": "Chat starten"
+    },
+    "manual": {
+      "title": "Manuelle Einrichtung",
+      "urlLabel": "Gateway-URL",
+      "urlPlaceholder": "https://your-gateway.example.com",
+      "tokenLabel": "Zugriffstoken",
+      "tokenPlaceholder": "Token eingeben",
+      "connect": "Verbinden",
+      "errorRequired": "Bitte geben Sie eine Gateway-URL ein",
+      "connecting": "Verbindung..."
+    },
+    "connecting": {
+      "title": "Verbindung...",
+      "subtitle": "Gateway-Verbindung wird überprüft"
+    },
+    "nearbyDiscovery": {
+      "looking": "Suche nach Hermes-Gateways in diesem Netzwerk…",
+      "subtitle": "Stellen Sie sicher, dass Ihr Host läuft und beide Geräte im selben Netzwerk sind.",
+      "found": "{{name}} gefunden",
+      "noGateways": "In diesem Netzwerk wurden keine Gateways gefunden.",
+      "unsupported": "Nähe-Suche ist auf diesem Gerät nicht verfügbar.",
+      "error": "Suche fehlgeschlagen.",
+      "enterManually": "Gateway manuell eingeben"
+    },
+    "deeplink": {
+      "checking": "Prüfe auf Einladungslink…",
+      "waiting": "Warte auf einen Einladungslink…",
+      "waitingSubtitle": "Öffnen Sie einen Einladungslink aus Nachrichten oder AirDrop oder kopieren Sie ihn in die Zwischenablage.",
+      "enterManually": "Verbindung manuell eingeben"
+    },
+    "back": "Zurück",
+    "cancel": "Abbrechen"
+  }
+}

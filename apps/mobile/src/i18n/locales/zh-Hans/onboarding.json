@@ -1,0 +1,67 @@
+{
+  "onboarding": {
+    "welcome": {
+      "title": "欢迎使用 Clawket",
+      "subtitle": "连接到您的 AI 代理网关并开始聊天",
+      "getStarted": "开始使用",
+      "haveConnection": "我已有连接"
+    },
+    "connectMethod": {
+      "title": "您想如何连接？",
+      "subtitle": "选择您偏好的连接方式",
+      "qr": {
+        "title": "扫描二维码",
+        "description": "扫描您的代理网关上的二维码"
+      },
+      "nearby": {
+        "title": "附近发现",
+        "description": "查找附近的设备",
+        "beta": "测试版"
+      },
+      "manual": {
+        "title": "手动输入",
+        "description": "手动输入网关 URL 和令牌"
+      },
+      "deeplink": {
+        "title": "邀请链接",
+        "description": "从信息或 AirDrop 打开邀请链接"
+      }
+    },
+    "success": {
+      "title": "一切就绪！",
+      "subtitle": "您的代理网关已连接",
+      "startChatting": "开始聊天"
+    },
+    "manual": {
+      "title": "手动设置",
+      "urlLabel": "网关 URL",
+      "urlPlaceholder": "https://your-gateway.example.com",
+      "tokenLabel": "访问令牌",
+      "tokenPlaceholder": "输入您的令牌",
+      "connect": "连接",
+      "errorRequired": "请输入网关 URL",
+      "connecting": "连接中..."
+    },
+    "connecting": {
+      "title": "连接中...",
+      "subtitle": "正在验证您的网关连接"
+    },
+    "nearbyDiscovery": {
+      "looking": "正在此网络查找 Hermes 网关…",
+      "subtitle": "请确保主机正在运行，并且两台设备处于同一网络。",
+      "found": "已找到 {{name}}",
+      "noGateways": "此网络上未找到网关。",
+      "unsupported": "此设备不支持附近发现功能。",
+      "error": "查找失败。",
+      "enterManually": "手动输入网关"
+    },
+    "deeplink": {
+      "checking": "正在检查邀请链接…",
+      "waiting": "正在等待邀请链接…",
+      "waitingSubtitle": "从信息或 AirDrop 打开邀请链接，或将其复制到剪贴板。",
+      "enterManually": "手动输入连接信息"
+    },
+    "back": "返回",
+    "cancel": "取消"
+  }
+}
